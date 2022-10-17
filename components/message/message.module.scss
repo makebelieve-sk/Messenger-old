@@ -1,0 +1,62 @@
+@import "../../styles/variables.scss";
+.message-container {
+    width: 100%;
+    height: auto;
+    .message-container--block {
+        max-width: 80%;
+        display: flex;
+        align-items: center;
+        padding-left: 10px;
+        padding-right: 10px;
+        margin-bottom: 5px;
+        .message-container_user-avatar--block {
+            width: 10%;
+        }
+        .message-container_text-message {
+            max-width: 90%;
+            word-wrap: break-word;
+            text-align: left;
+            font-size: 14px;
+            font-family: Roboto;
+            padding: 6px 58px 6px 10px;
+            border: 1px solid $very-light-grey;
+            background-color: $very-medium-grey;
+            border-radius: 10px 6px 6px 10px;
+            position: relative;
+            box-shadow: 0 1px 2px 0 rgb(16 35 47 / 15%);
+            .message-container_text-message--time {
+                position: absolute;
+                bottom: 2px;
+                right: 25px;
+                font-size: 12px;
+                color: $light-grey;
+            }
+            .author--friend-time {
+                right: 15px;
+            }
+            .message-container_text-message--status {
+                position: absolute;
+                bottom: 2px;
+                right: 5px;
+                font-size: 16px;
+                color: $light-grey;
+            }
+            .is-read {
+                color: $green;
+            }
+        }
+        .author--friend-message {
+            padding-right: 45px;
+            border-radius: 6px 10px 10px 6px;
+        }
+    }
+    .author--me {
+        margin-left: auto;
+        justify-content: flex-end;
+        margin-right: 10px;
+    }
+    .author--friend {
+        margin-right: auto;
+        justify-content: start;
+    }
+}

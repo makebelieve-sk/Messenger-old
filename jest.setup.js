@@ -1,6 +1,21 @@
-// Optional: configure or set up a testing framework before each test.
-// If you delete this file, remove `setupFilesAfterEnv` from `jest.config.js`
+import Enzyme, { render, shallow, mount } from "enzyme";
+import Adapter from "@wojtekmaj/enzyme-adapter-react-17";
+import useTest from "./hooks/useTest";
 
-// Used for __tests__/testing-library.js
-// Learn more: https://github.com/testing-library/jest-dom
-import '@testing-library/jest-dom/extend-expect'
+export const setUp = (testMethod, component) => Enzyme[testMethod](useTest(component));
+
+// Адаптер для React v17
+Enzyme.configure({ adapter: new Adapter() });
+
+// Мокаем next/router
+jest.mock('next/router', () => require('next-router-mock'));
+
+// Сохраняем глобальные переменные
+global.render = render;
+global.shallow = shallow;
+global.mount = mount;
+
+// Обработка ошибок
+console.error = message => {
+    throw new Error(`При прогоне тестов возникла ошибка: ${message}`);
+};

@@ -1,0 +1,39 @@
+@import "styles/variables";
+.main-text {
+    text-align: center;
+}
+
+.img-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    .avatar-loading {
+        width: 100%;
+        height: 100%;
+        min-width: 258.67px;
+        min-height: 344.89px;
+        border-radius: 5%;
+    }
+    .avatar {
+        width: 100%;
+        height: 100%;
+        border-radius: 5%;
+    }
+    .avatar-without-user {
+        background-color: #BDBDBD;
+        width: 100%;
+        min-width: 258.67px;
+        min-height: 344.89px;
+        height: 100%;
+        border-radius: 5%;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 20px;
+        line-height: 344.89px;
+    }
+}
+
+.diff-photo {
+    color: $blue;
+    cursor: pointer;
+}

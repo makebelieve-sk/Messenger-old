@@ -1,0 +1,13 @@
+.menu-container {
+    padding-top: 2%;
+    .menu-container--menu-item {
+        padding-left: 10px;
+        padding-right: 20px;
+        div {
+            padding-left: 10px;
+        }
+        .menu-container--badge {
+            margin-left: 20px;
+        }
+    }
+}

@@ -1,0 +1,39 @@
+.header-container {
+    width: 900px;
+    max-width: 900px;
+    .header-container--toolbar {
+        display: flex;
+        justify-content: space-between;
+        .header-container_block {
+            display: flex;
+            justify-content: flex-start;
+            .header-container--logo {
+                margin-top: 3px;
+                margin-right: 1rem;
+                &:hover {
+                    cursor: pointer;
+                }
+            }
+            .header-container--title {
+                margin-right: 3rem;
+                font-family: "monospace";
+                font-weight: 700;
+                letter-spacing: .3rem;
+                color: "inherit";
+                text-decoration: none;
+                &:hover {
+                    cursor: pointer;
+                }
+            }
+            .header-container--search-input {
+                height: 32px;
+                line-height: 32px;
+                .header-container_search-input--logo {
+                    &:hover {
+                        cursor: pointer;
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,65 @@
+@import "styles/variables";
+.friends-container--paper-block {
+    padding: 10px 20px;
+    .friends-container_block--box-container {
+        border-bottom: 1px;
+        border-color: "divider";
+        .friends-container_block--tab {
+            padding: 12px 12px 12px 12px;
+        }
+        .friends-container_block--box-container--button {
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    }
+    .friends-container_block--possible-title {
+        font-size: 14px;
+    }
+    .friends-container_block--possible-friend-item-ul {
+        width: "100%";
+        background-color: "background.paper";
+        & li:last-child {
+            padding: 0;
+        }
+        .friends-container_block--no-possible-friend {
+            color: $light-grey;
+            font-size: 12px;
+            text-align: center;
+        }
+        .friends-container_block--possible-friend-item {
+            padding: 0 0 10px 0;
+            color: $blue;
+            display: flex;
+            align-items: center;
+            .friends-container_block--possible-friend-avatar {
+                width: 45px;
+                min-width: 45px;
+                &:hover {
+                    cursor: pointer;
+                }
+            }
+            .friends-container_block--possible-friend-name {
+                span {
+                    font-size: 12px;
+                }
+                .friends-container_block--possible-friend-action-block {
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    color: $blue;
+                    &:hover {
+                        cursor: pointer;
+                        text-decoration: underline;
+                    }
+                    .friends-container_block--possible-friend-icon {
+                        height: 15px;
+                        width: 15px;
+                    }
+                    .friends-container_block--possible-add-to-friend {
+                        font-size: 12px;
+                    }
+                }
+            }
+        }
+    }
+}

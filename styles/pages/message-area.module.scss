@@ -1,0 +1,203 @@
+@import "styles/variables";
+.message-area-container {
+    grid-column-start: 1;
+    grid-row-start: 1;
+    overflow: hidden;
+    margin-bottom: 10px;
+    min-height: calc(100vh - 91px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: $white;
+    border-radius: 5px;
+    position: relative;
+    .message-area-container--header {
+        padding-right: 10px;
+        height: 50px;
+        border-bottom: 1px solid $very-light-grey;
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        align-items: center;
+        .header-container--back {
+            padding-left: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 100%;
+            width: 65px;
+            color: $placeholder-grey;
+            &:hover {
+                background: linear-gradient(to right, rgba(174, 183, 194, 0.12) 50%, transparent);
+                cursor: pointer;
+            }
+            .header-container--back--icon {
+                height: 20px;
+                width: 20px;
+                stroke: $placeholder-grey;
+                stroke-width: 0.4;
+            }
+            div {
+                font-size: 14px;
+            }
+        }
+        .header-container--central-block {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            .header-container--name {
+                font-size: 14px;
+            }
+            .header-container--status {
+                font-size: 12px;
+                color: $placeholder-grey;
+            }
+        }
+        .header-container--right-block {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 70px;
+            .header-container--right-block--avatar {
+                width: 35px;
+                height: 35px;
+                &:hover {
+                    cursor: pointer;
+                }
+            }
+        }
+        .header-container--friend-name-loading {
+            width: 100px;
+        }
+    }
+    .message-area-container--messages {
+        padding: 20px;
+        width: 100%;
+        flex: 1 1 auto;
+        position: relative;
+        margin-bottom: 25px;
+        .message-area-container--messages-scrollable {
+            overflow-y: overlay;
+            display: block;
+            height: auto;
+            max-height: 100%;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            top: 0;
+            .message-area-container--loading {
+                margin: auto;
+            }
+            .message-area-container--messages-wrapper {
+                padding-top: 10px;
+                padding-left: 10px;
+                padding-right: 10px;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
+                min-height: 100%;
+                .message-area-container--loading-is-more {
+                    margin: auto;
+                }
+            }
+            .message-area-container--no-history {
+                font-size: 14px;
+                opacity: 0.7;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+        }
+    }
+    .messages--submit-block {
+        padding: 13.2528px;
+        width: 100%;
+        border-top: 1px solid $light-grey;
+        min-height: 62px;
+        max-height: 226.5056px;
+        background-color: $very-medium-grey;
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: space-between;
+        .messages-container--search-field-wrapper {
+            width: 93%;
+            position: relative;
+            .messages-container--search-field-icon {
+                height: 25px;
+                width: 25px;
+                position: absolute;
+                color: $placeholder-grey;
+                bottom: 7px;
+                opacity: 0.7;
+                &:hover {
+                    cursor: pointer;
+                    transition: all 0.5s;
+                    opacity: 1;
+                }
+            }
+            .smiles {
+                left: 8px;
+            }
+            .attach-file {
+                right: 8px;
+                transform: rotate(45deg);
+            }
+            .messages-container--search-field {
+                outline: none;
+                text-align: left;
+                min-height: 36px;
+                resize: none;
+                max-height: 200px;
+                overflow-y: auto;
+                overflow-x: hidden;
+                line-height: 1.3125;
+                word-wrap: break-word;
+                box-sizing: border-box;
+                transition: border-bottom-color .3s linear;
+                width: 592px;
+                border: 1px solid $very-light-grey;
+                border-radius: 6px;
+                padding-right: 40px;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                padding-left: 40px;
+                cursor: text;
+                font-size: 13px;
+                font-family: Roboto, Helvetica, Arial, serif;
+                &:empty::before {
+                    content: ("Напишите сообщение...");
+                    outline: none;
+                    color: $placeholder-grey;
+                }
+                &:not(:empty)::before {
+                    content: ("");
+                }
+                &:empty:focus::before {
+                    outline: none;
+                    opacity: 0.7;
+                }
+            }
+            .is-error {
+                border: 1px solid $red;
+            }
+            .messages-container--error-text {
+                font-size: 10px;
+                color: $red;
+                position: absolute;
+                bottom: 1px;
+                left: 40px;
+            }
+        }
+        .messages-container--search-icon {
+            width: 5%;
+            text-align: center;
+            opacity: 0.5;
+            cursor: pointer;
+        }
+    }
+}

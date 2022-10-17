@@ -1,0 +1,53 @@
+@import "styles/variables";
+.messages-container {
+    padding: 20px;
+    min-height: calc(100vh - 91px);
+    overflow: hidden;
+    position: relative;
+    .messages-container--list {
+        max-height: calc(100vh - 180px);
+        overflow-y: auto;
+        .messages-container--item {
+            &:hover {
+                cursor: pointer;
+            }
+            .messages-container--avatar-container {
+                &:hover {
+                    cursor: pointer;
+                }
+            }
+            .messages-container--dialog-name {
+                font-size: 14px;
+                color: $black;
+                font-weight: 500;
+                -webkit-font-smoothing: subpixel-antialiased;
+                &:hover {
+                    cursor: pointer;
+                }
+            }
+            .messages-container--secondary {
+                display: flex;
+                align-items: center;
+                margin-top: 8px;
+                font-size: 13px;
+                color: $dark-blue;
+                .messages-container--author-avatar {
+                    margin-right: 7px;
+                }
+            }
+            .messages-container--dialog-date {
+                opacity: 0.5;
+                font-size: 14px;
+            }
+        }
+    }
+    .messages-container--no-dialogs {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding-top: 20px;
+        font-size: 14px;
+        opacity: 0.5;
+    }
+}

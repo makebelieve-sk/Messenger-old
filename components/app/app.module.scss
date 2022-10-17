@@ -1,0 +1,17 @@
+.body {
+    width: "inherit";
+    .body-container {
+        width: 900px;
+        max-width: 900px;
+        margin: 0 auto;
+        padding-inline: 24px;
+        display: flex;
+        align-items: flex-start;
+        .body-container_page-content-wrapper {
+            padding-top: 2%;
+            padding-left: 2%;
+            width: 100%;
+            text-align: center;
+        }
+    }
+}
