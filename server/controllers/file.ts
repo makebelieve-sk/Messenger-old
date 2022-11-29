@@ -1,7 +1,7 @@
 import multer from "multer";
 import { nanoid } from "nanoid";
 // import sharp from "sharp";
-// import fs from "fs";
+import fs from "fs";
 import { Request, Response, Express } from "express";
 import { ApiRoutes, HTTPStatuses } from "../../config/enums";
 
@@ -17,7 +17,13 @@ class FileController {
     public uploader = multer({
         storage: multer.diskStorage({
             destination: function (_, file: Express.Multer.File, callback: (error: (Error | null), filename: string) => void) {
-                callback(null, `public/${file.fieldname}s/`);
+                const folder = `public/${file.fieldname}s/`;
+
+                if (!fs.existsSync(folder)) {
+                    fs.mkdirSync(folder);
+                }
+                
+                callback(null, folder);
             },
             filename: function (_, file: Express.Multer.File, callback: (error: (Error | null), filename: string) => void) {
                 callback(null, file.fieldname + "-" + nanoid(6) + "." + file.mimetype.split("/").pop());

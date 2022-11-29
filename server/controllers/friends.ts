@@ -1,7 +1,7 @@
 import { Request, Response, Express } from "express";
 import { Op } from "sequelize";
 import { Transaction } from "sequelize/types";
-import { ApiRoutes, FriendsTab, HTTPStatuses } from "../../config/enums";
+import { ApiRoutes, ErrorTexts, FriendsTab, HTTPStatuses } from "../../config/enums";
 import { sequelize } from "../database";
 import ChatsModel from "../database/models/chats";
 import FriendsModel from "../database/models/friends";
@@ -179,10 +179,17 @@ class FriendsController {
             const friendInfo = friendId ? await UserModel.findByPk(friendId, { attributes: ["id", "avatarUrl", "firstName", "thirdName"] }) : null;
 
             if (!friendInfo) {
-                throw new Error(`Пользователь с id = ${userId} не найден`);
+                throw new Error(ErrorTexts.NOT_TEMP_CHAT_ID);
             }
 
-            return res.json({ success: true, friendInfo: { id: friendInfo.id, avatarUrl: friendInfo.avatarUrl, friendName: friendInfo.firstName + " " + friendInfo.thirdName } });
+            return res.json({ 
+                success: true, 
+                friendInfo: { 
+                    id: friendInfo.id, 
+                    avatarUrl: friendInfo.avatarUrl, 
+                    friendName: friendInfo.firstName + " " + friendInfo.thirdName 
+                } 
+            });
         } catch (error: any) {
             console.log(error);
             return res.status(HTTPStatuses.ServerError).send({ success: false, message: error.message ?? error });

@@ -32,24 +32,35 @@ export default function MenuComponent() {
     }, [user]);
 
     return <div id="menu-container" className={styles["menu-container"]}>
-        <Stack direction="row" spacing={2}>
-            <Paper>
-                <MenuList id="menu-list">
-                    <MenuItem onClick={() => router.push(Pages.profile)} className={styles["menu-container--menu-item"]}>
-                        <AccountCircleOutlinedIcon color="primary" /><div>Моя страница</div>
+        <Stack direction="column" spacing={2}>
+            <nav>
+                <MenuList id="menu-list" className={styles["menu-container__menu-list"]}>
+                    <MenuItem onClick={() => router.push(Pages.profile)} className={styles["menu-container__menu-item"]}>
+                        <AccountCircleOutlinedIcon color="primary" /><span>Моя страница</span>
                     </MenuItem>
 
-                    <MenuItem onClick={() => router.push(Pages.messages)} className={styles["menu-container--menu-item"]}>
-                        <MessageOutlinedIcon color="primary" /><div>Мессенджер</div>
+                    <MenuItem onClick={() => router.push(Pages.messages)} className={styles["menu-container__menu-item"]}>
+                        <MessageOutlinedIcon color="primary" /><span>Мессенджер</span>
                     </MenuItem>
 
-                    <MenuItem onClick={() => router.push({ pathname: Pages.friends, query: { mainTab: MainFriendTabs.allFriends } })} className={styles["menu-container--menu-item"]}>
+                    <MenuItem 
+                        onClick={() => router.push({ pathname: Pages.friends, query: { mainTab: MainFriendTabs.allFriends } })} 
+                        className={styles["menu-container__menu-item"]}
+                    >
                         <PeopleOutlinedIcon color="primary" />
-                        <div>Друзья </div>
-                        <Badge color="primary" badgeContent={friendNotification ? friendNotification : null} className={styles["menu-container--badge"]} />
+                        <span>Друзья </span>
+                        <Badge 
+                            color="default" 
+                            badgeContent={friendNotification ? friendNotification : null} 
+                            className={styles["menu-container__badge"]} 
+                        />
                     </MenuItem>
                 </MenuList>
-            </Paper>
+            </nav>
+
+            <div className={styles["menu-container__down-info"]}>
+                Разработчикам
+            </div>
         </Stack>
     </div>
 };

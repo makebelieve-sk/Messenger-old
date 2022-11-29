@@ -1,114 +1,67 @@
 import { Request, Response, Express } from "express";
-import { IContactsValues } from "../../components/edit-tabs-module/contacts";
-import { IMainValues } from "../../components/edit-tabs-module/main";
 import { ApiRoutes, HTTPStatuses } from "../../config/enums";
+import { IFormValues } from "../../pages/edit";
+import { IUser, IUserDetails } from "../../types/models.types";
 import { sequelize } from "../database";
-import UserModel, { UserInstance } from "../database/models/users";
-import UserDetailModel, { UserDetailsInstance } from "../database/models/user_details";
+import UserModel from "../database/models/users";
+import UserDetailModel from "../database/models/user_details";
 import { mustAuthenticated } from "../middlewares";
 
 class UserController {
-    // Изменение основной информации о пользователе
-    async editMainInfo(req: Request, res: Response) {
+    // Изменение информации о пользователе
+    async editInfo(req: Request, res: Response) {
         const transaction = await sequelize.transaction();
-        
+
         try {
-            const { name, surName, sex, birthday, work, userId }: IMainValues & { userId: string } = req.body;
+            const { name, surName, sex, birthday, work, userId, city, phone, email }: IFormValues & { userId: string } = req.body;
+
+            const result: { user: Omit<IUser, "password" | "salt"> | null, userDetails: Omit<IUserDetails, "id" | "userId"> | null } = { 
+                user: null, 
+                userDetails: null 
+            };
 
             const findUser = await UserModel.findByPk(userId);
-            let user: any = null;
 
             if (findUser) {
-                await UserModel.update(
-                    { firstName: name, thirdName: surName },
-                    { where: { id: userId }, transaction }
-                );
+                result.user = {
+                    ...findUser.getUserData(),
+                    firstName: name, 
+                    thirdName: surName, 
+                    email, 
+                    phone
+                };
 
-                user = await UserModel.findByPk(findUser.id, { transaction });
-
-                if (user) {
-                    user = user.getUserData();
-                } else {
-                    await transaction.rollback();
-                    return res.status(HTTPStatuses.NotFound).send({ success: false, message: "Запись пользователя в таблице Users не найдена" });
-                }
+                await UserModel.update(result.user, { where: { id: userId }, transaction });
             } else {
                 await transaction.rollback();
-                return res.status(HTTPStatuses.NotFound).send({ success: false, message: "Запись пользователя в таблице Users не найдена" });
+                return res.status(HTTPStatuses.NotFound).send({ 
+                    success: false, 
+                    message: "Запись пользователя в таблице Users не найдена" 
+                });
             }
 
             const findUserDetail = await UserDetailModel.findOne({ where: { userId } });
-            let userDetail: UserDetailsInstance | null = null;
 
             if (findUserDetail) {
-                await UserDetailModel.update(
-                    { sex, birthday, work }, 
-                    { where: { userId }, transaction }
-                );
+                result.userDetails = {
+                    sex, 
+                    birthday, 
+                    work,
+                    city
+                };
 
-                userDetail = await UserDetailModel.findByPk(findUserDetail.id, { transaction });
+                await UserDetailModel.update(result.userDetails, { where: { userId }, transaction });
             } else {
                 await transaction.rollback();
-                return res.status(HTTPStatuses.NotFound).send({ success: false, message: "Запись информации о пользователе в таблице UserDetails не найдена" });
+                return res.status(HTTPStatuses.NotFound).send({ 
+                    success: false, 
+                    message: "Запись информации о пользователе в таблице UserDetails не найдена" 
+                });
             }
 
             await transaction.commit();
 
-            return res.json({ success: true, user, userDetail });
-        } catch (error: any) {
-            await transaction.rollback();
-            console.log(error);
-            return res.status(HTTPStatuses.ServerError).send({ success: false, message: error.message ?? error });
-        }
-    };
-
-    // Изменение контактов о пользователе
-    async editContactsInfo(req: Request, res: Response) {
-        const transaction = await sequelize.transaction();
-        
-        try {
-            const { city, phone, email, userId }: IContactsValues & { userId: string } = req.body;
-
-            const findUser = await UserModel.findByPk(userId);
-            let user: any = null;
-
-            if (findUser) {
-                await UserModel.update(
-                    { phone, email },
-                    { where: { id: userId }, transaction }
-                );
-
-                user = await UserModel.findByPk(findUser.id, { transaction });
-
-                if (user) {
-                    user = user.getUserData();
-                } else {
-                    await transaction.rollback();
-                    return res.status(HTTPStatuses.NotFound).send({ success: false, message: "Запись пользователя в таблице Users не найдена" });
-                }
-            } else {
-                await transaction.rollback();
-                return res.status(HTTPStatuses.NotFound).send({ success: false, message: "Запись пользователя в таблице Users не найдена" });
-            }
-
-            const findUserDetail = await UserDetailModel.findOne({ where: { userId } });
-            let userDetail: UserDetailsInstance | null = null;
-
-            if (findUserDetail) {
-                await UserDetailModel.update(
-                    { city }, 
-                    { where: { userId }, transaction }
-                );
-
-                userDetail = await UserDetailModel.findByPk(findUserDetail.id, { transaction });
-            } else {
-                await transaction.rollback();
-                return res.status(HTTPStatuses.NotFound).send({ success: false, message: "Запись информации о пользователе в таблице UserDetails не найдена" });
-            }
-
-            await transaction.commit();
-
-            return res.json({ success: true, user, userDetail });
+            return res.json({ success: true, ...result });
         } catch (error: any) {
             await transaction.rollback();
             console.log(error);
@@ -138,7 +91,6 @@ class UserController {
 const userController = new UserController();
 
 export default function UserRouter(app: Express) {
-    app.post(ApiRoutes.editMain, mustAuthenticated, userController.editMainInfo);
-    app.post(ApiRoutes.editContacts, mustAuthenticated, userController.editContactsInfo);
+    app.post(ApiRoutes.editInfo, mustAuthenticated, userController.editInfo);
     app.post(ApiRoutes.getUserDetail, mustAuthenticated, userController.getUserDetail);
 };

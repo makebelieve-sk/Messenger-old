@@ -10,10 +10,9 @@ import { setUser } from "../state/user/slice";
 import { ApiRoutes, Pages } from "../config/enums";
 import CatchErrors from "../axios/catch-errors";
 import { IUser } from "../types/models.types";
-import { COOKIE_NAME } from "../config";
+import { COOKIE_NAME, REQUIRED_FIELD } from "../config";
 import Request from "../common/request";
 
-const REQUIRED_FIELD = "Заполните поле";
 const THEME = createTheme();
 
 const initialValues = {

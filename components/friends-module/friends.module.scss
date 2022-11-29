@@ -1,114 +1,116 @@
-@import "styles/variables";
-.friends-container_block--search-field {
+@import "styles/colors";
+
+.friends-list-container__tabs {
+    margin-bottom: 10px;
+    .friends-list-container__tab {
+        padding: 10px 20px;
+    }
+}
+.friends-list-container__search {
     margin-bottom: 20px;
 }
-
-.all-friends-container_block-ul {
-    width: "100%";
-    background-color: "background.paper";
+.friends-list-container__list {
+    width: 100%;
     padding: 0;
-    .friends-container_block--no-friends {
-        color: $light-grey;
-        font-size: 14px;
-        text-align: center;
-        height: 300px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        .friends-container_block--box-container--button {
-            font-size: 12px;
-            margin-top: 10px;
+    .friends-list-container__skeleton-container {
+        margin-bottom: 10px;
+        &:last-child {
+            margin-bottom: 0;
         }
     }
-    & li:first-child {
-        padding-top: 0;
-    }
-    & li:last-child {
-        padding-bottom: 0;
-        border: none;
-    }
-    .all-friends-container_block {
-        padding: 10px 0 10px 0;
+    .friends-list-container__item {
+        padding-bottom: 20px;
         border-bottom: 1px solid $light-grey;
         color: $blue;
         display: flex;
         align-items: flex-start;
-        .all-friends-container_block--friend-avatar-block {
-            width: 105px;
-            min-width: 105px;
-            height: 90px;
-            min-height: 90px;
+        &:last-child {
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        &__avatar-block {
+            width: 95px;
+            min-width: 95px;
+            height: 80px;
+            min-height: 80px;
             &:hover {
                 cursor: pointer;
             }
-            .all-friends-container_block--friend-avatar {
-                width: 90px;
-                height: 90px;
-            }
         }
-        .all-friends-container_block--friend-name {
+        &__avatar {
+            width: 80px;
+            height: 80px;
+        }
+        &__user-name {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            font-size: 13px;
+            font-weight: 700;;
             span {
                 color: $blue;
-                font-size: 14px;
+                font-size: 13px;
+                font-weight: 400;
             }
-            .all-friends-container_block--write-message {
+        }
+        &__write-message {
+            margin-top: 10px;
+            &:hover {
                 cursor: pointer;
             }
-            .all-friends-container_block--chip-block {
-                .all-friends-container_block--chip-icon {
-                    width: 20px;
-                    height: 20px;
-                }
-                .all-friends-container_block--chip {
-                    font-size: 12px;
-                }
+        }
+        &__accept-block {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            &:hover {
+                text-decoration: none;
             }
-            .all-friends-container_block--friend-action-block {
-                display: flex;
-                width: 100%;
-                align-items: center;
-                color: $blue;
-                &:hover {
-                    cursor: pointer;
-                    text-decoration: underline;
-                }
-                .all-friends-container_block--friend-icon {
-                    height: 20px;
-                    width: 20px;
-                }
-                .all-friends-container_block--add-to-friend {
-                    font-size: 14px;
-                    font-weight: 400;
-                }
+        }
+        &__action {
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        &__add-block {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            color: $blue;
+            &:hover {
+                cursor: pointer;
+                text-decoration: underline;
             }
-            .all-friends-container_block--accept-block {
-                display: flex;
-                flex-direction: column;
-                align-items: flex-start;
-                &:hover {
-                    text-decoration: none;
-                }
-                .all-friends-container_block--accept-friend {
-                    font-size: 12px;
-                    margin-top: 10px;
-                }
-                .all-friends-container_block--accept-friend-reject {
-                    margin-top: 10px;
-                    font-size: 12px;
-                }
-            }
-            .all-friends-container_block--accept-friend {
-                font-size: 12px;
-                margin-top: 10px;
-            }
-            .all-friends-container_block--accept-friend-reject {
-                margin-top: 10px;
-                font-size: 12px;
-            }
+        }
+        &__add-icon {
+            height: 20px;
+            width: 20px;
+        }
+        &__add-to-friend {
+            font-size: 14px;
+            font-weight: 400;
+        }
+        &__wrap {
+            margin-top: 10px;
+        }
+        &__chip-icon {
+            width: 20px;
+            height: 20px;
+        }
+        &__chip {
+            font-size: 12px;
+        }
+    }
+    .friends-list-container__no-friends {
+        color: $light-grey;
+        font-size: 14px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        &__button {
+            font-size: 12px;
+            margin-top: 10px;
         }
     }
 }

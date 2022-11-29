@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { MessageReadStatus, MessageTypes } from "../config/enums";
 
 // Интерфейс атрибутов модели Users
@@ -17,7 +18,7 @@ export interface IUser {
 export interface IUserDetails {
     id: number;
     userId: string;
-    birthday: string;
+    birthday: string | dayjs.Dayjs;
     city: string;
     work: string;
     sex: string;

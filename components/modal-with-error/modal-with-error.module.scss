@@ -1,0 +1,20 @@
+@import "../../styles/colors.scss";
+
+.modal-error-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    box-shadow: 24px;
+    padding: 15px 30px 25px;
+    background: $white;
+    &__error {
+        margin-top: 10px;
+        border: 1px solid $very-light-grey;
+        padding: 10px;
+        &:hover {
+            cursor: copy;
+        }
+    }
+}

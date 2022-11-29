@@ -11,6 +11,9 @@
         margin-bottom: 5px;
         .message-container_user-avatar--block {
             width: 10%;
+            &:hover {
+                cursor: pointer;
+            }
         }
         .message-container_text-message {
             max-width: 90%;
@@ -24,15 +27,18 @@
             border-radius: 10px 6px 6px 10px;
             position: relative;
             box-shadow: 0 1px 2px 0 rgb(16 35 47 / 15%);
+            &:hover {
+                cursor: pointer;
+            }
             .message-container_text-message--time {
                 position: absolute;
                 bottom: 2px;
-                right: 25px;
+                right: 23px;
                 font-size: 12px;
                 color: $light-grey;
             }
             .author--friend-time {
-                right: 15px;
+                right: 10px;
             }
             .message-container_text-message--status {
                 position: absolute;
@@ -44,16 +50,32 @@
             .is-read {
                 color: $green;
             }
+            .author-name {
+                font-weight: 700;
+                font-size: 12.5px;
+                margin-bottom: 5px;
+                color: $blue;
+                &:hover {
+                    text-decoration: underline;
+                }
+            }
+            .message-container--message-content {
+                width: 100%;
+            }
         }
         .author--friend-message {
             padding-right: 45px;
             border-radius: 6px 10px 10px 6px;
         }
+        .author--friend-message--with-name {
+            display: flex;
+            flex-direction: column;
+        }
     }
     .author--me {
         margin-left: auto;
         justify-content: flex-end;
-        margin-right: 10px;
+        margin-right: 40px;
     }
     .author--friend {
         margin-right: auto;

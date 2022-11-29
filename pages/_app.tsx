@@ -11,6 +11,7 @@ import store from "../state/store";
 import App from "../components/app";
 
 import styles from "../styles/pages/_app.module.scss";
+import "../styles/ui.css";
 import "../styles/globals.css";
 
 export default function _App({ Component, pageProps }: AppProps) {
@@ -18,10 +19,10 @@ export default function _App({ Component, pageProps }: AppProps) {
     <>
       <Head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
-        <title>ВК-КЛОН</title>
+        <title>Мессенджер</title>
       </Head>
 
-      <div className={styles["app"]}>
+      <div className={styles["main"]}>
         <Provider store={store}>
           <App Component={Component} pageProps={pageProps} />
         </Provider>

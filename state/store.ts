@@ -4,6 +4,7 @@ import errorReducer from "./error/slice";
 import friendsReducer from "./friends/slice";
 import mainReducer from "./main/slice";
 import messagesReducer from "./messages/slice";
+import callsReducer from "./calls/slice";
 
 export default configureStore({
     reducer: {
@@ -12,5 +13,6 @@ export default configureStore({
         error: errorReducer,
         friends: friendsReducer,
         messages: messagesReducer,
+        calls: callsReducer,
     },
 });

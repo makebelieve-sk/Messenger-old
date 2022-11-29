@@ -16,9 +16,18 @@ import { NO_PHOTO } from "../config";
 
 import styles from "../styles/pages/friends.module.scss";
 
+// Массив скелетонов
+export const skeletonsPossibleFriends: JSX.Element[] = new Array(5).fill(
+    <div className={styles["skeleton-container__block"]}>
+        <Skeleton variant="circular" className={styles["skeleton-container__img"]} />
+        <Skeleton variant="text" className={styles["skeleton-container__text"]} />
+    </div>
+);
+
 export default function Friends() {
     const [mainTab, setMainTab] = React.useState(0);
     const [loading, setLoading] = React.useState(false);
+    const [loadingContent, setLoadingContent] = React.useState(false);
 
     const { user } = useAppSelector(selectUserState);
     const { friends, possibleUsers } = useAppSelector(selectFriendState);
@@ -44,28 +53,37 @@ export default function Friends() {
         }
     }, [friendNotification]);
 
-    // Получение друзей в зависимости от вкладок
+    // Получение друзей в зависимости от вкладок контента
+    React.useEffect(() => {
+        updateFriends(true);
+    }, [friendTab]);
+
+    // Получение друзей в зависимости от главных вкладок
+    React.useEffect(() => {
+        updateFriends();
+    }, [user, mainTab]);
+
+    // Получение только топ-5 возможных друзей
     React.useEffect(() => {
         if (user) {
-            setLoading(true);
+            Request.post(ApiRoutes.getPossibleUsers, { userId: user.id }, setLoadingContent,
+                (data: { success: boolean, possibleUsers: IUser[] }) => dispatch(setPossibleUsers(data.possibleUsers)),
+                (error: any) => CatchErrors.catch(error, router, dispatch)
+            );
+        }
+    }, [user, friends]);
+
+    const updateFriends = (updateFromContent = false) => {
+        if (user) {
+            const loadingCb = updateFromContent ? setLoadingContent : setLoading;
 
             const currentTab = mainTab === MainFriendTabs.search
                 ? FriendsTab.search
                 : friendTab;
 
-            requestFriends(user.id, currentTab);
+            requestFriends(user.id, currentTab, false, loadingCb);
         }
-    }, [user, mainTab, friendTab]);
-
-    // Получение только топ-5 возможных друзей
-    React.useEffect(() => {
-        if (user) {
-            Request.post(ApiRoutes.getPossibleUsers, { userId: user.id }, setLoading, 
-                (data: { success: boolean, possibleUsers: IUser[] }) => dispatch(setPossibleUsers(data.possibleUsers)), 
-                (error: any) => CatchErrors.catch(error, router, dispatch)
-            );
-        }
-    }, [user, friends]);
+    };
 
     const onChangeMainTab = (newValue: number) => {
         setMainTab(newValue);
@@ -78,16 +96,23 @@ export default function Friends() {
     };
 
     // Запрос на получение списка пользователей для вкладки
-    const requestFriends = (userId: string, tab: number, refresh = false) => {
-        Request.post(ApiRoutes.getFriends, { userId, tab }, undefined, 
+    const requestFriends = (
+        userId: string, 
+        tab: number, 
+        refresh = false, 
+        loadingCb: undefined | ((value: React.SetStateAction<boolean>) => void) = undefined
+    ) => {
+        Request.post(ApiRoutes.getFriends, { userId, tab }, loadingCb,
             (data: { success: boolean, friends: IUser[] }) => {
-                dispatch(setFriends(data.friends));
+                if (data.success) {
+                    dispatch(setFriends(data.friends));
 
-                // Обновляем уведомления у пункта "Друзья"
-                if (tab === FriendsTab.friendRequests && !refresh) {
-                    dispatch(setFriendNotification(data.friends.length));
+                    // Обновляем уведомления у пункта "Друзья"
+                    if (tab === FriendsTab.friendRequests && !refresh) {
+                        dispatch(setFriendNotification(data.friends.length));
+                    }
                 }
-            }, 
+            },
             (error: any) => CatchErrors.catch(error, router, dispatch)
         );
     };
@@ -95,7 +120,7 @@ export default function Friends() {
     // Подписка на пользователя
     const onAddUser = (friendId: string | null) => {
         if (user && friendId && possibleUsers) {
-            Request.post(ApiRoutes.addToFriend, { userId: user.id, friendId }, undefined, 
+            Request.post(ApiRoutes.addToFriend, { userId: user.id, friendId }, undefined,
                 () => {
                     const findUser = possibleUsers.find(user => user.id === friendId);
 
@@ -122,7 +147,7 @@ export default function Friends() {
                     if (route) {
                         requestFriends(user.id, route);
                     }
-                }, 
+                },
                 (error: any) => CatchErrors.catch(error, router, dispatch)
             );
         } else {
@@ -131,76 +156,121 @@ export default function Friends() {
     };
 
     return <Grid container spacing={2}>
+        {/* Блок основного контента */}
         <Grid item xs={8}>
-            <Paper className={styles["friends-container--paper-block"]}>
-                {
-                    loading
-                        ? <Stack spacing={1}>
-                            <Skeleton variant="rectangular" width={210} height={118} />
-                            <Skeleton variant="text" />
-                            <Skeleton variant="text" />
+            <Paper className="paper-block">
+                <div className={styles["content-container"]}>
+                    {loading
+                        ? <Stack spacing={1} className={styles["skeleton-container"]}>
+                            <div className={styles["skeleton-container__row"]}>
+                                <Skeleton variant="text" className={styles["skeleton-container__text"]} />
+                                <Skeleton variant="text" className={styles["skeleton-container__text"]} />
+                            </div>
+
+                            <Skeleton variant="rectangular" className={styles["skeleton-container__input"]} />
+
+                            {skeletonsPossibleFriends.map((skeleton, index) => {
+                                return <div key={"content-container " + index} className={styles["skeleton-container__row"]}>
+                                    {skeleton}
+                                </div>
+                            })}
                         </Stack>
-                        : <FriendsList friends={friends} mainTab={mainTab} userId={user?.id} onChangeMainTab={onChangeMainTab} />
-                }
+                        : <FriendsList 
+                            friends={friends} 
+                            mainTab={mainTab} 
+                            userId={user?.id} 
+                            loadingContent={loadingContent} 
+                            onChangeMainTab={onChangeMainTab} 
+                        />
+                    }
+                </div>
             </Paper>
         </Grid>
 
         <Grid item container xs={4} direction="column" spacing={2}>
+            {/* Блок главного меню */}
             <Grid item>
-                <Paper className={styles["friends-container--paper-block"]}>
-                    <Box className={styles["friends-container_block--box-container"]}>
-                        <Tabs value={mainTab} onChange={(_, newValue) => onChangeMainTab(newValue)} aria-label="main-friends-tabs" orientation="vertical">
-                            <Tab label="Мои друзья" id="all-friends" aria-controls="all-friends" className={styles["friends-container_block--tab"]} />
+                <Paper className="paper-block">
+                    <Box className={styles["main-menu-container__block"]}>
+                        <Tabs
+                            value={mainTab}
+                            onChange={(_, newValue) => onChangeMainTab(newValue)}
+                            aria-label="main-friends-tabs"
+                            orientation="vertical"
+                        >
                             <Tab
-                                label={friendNotification ? <Badge color="primary" badgeContent=" " variant="dot">Заявки в друзья</Badge> : "Заявки в друзья"}
+                                label="Мои друзья"
+                                id="all-friends"
+                                aria-controls="all-friends"
+                                className={styles["main-menu-container__tab"] + " label-tab"}
+                            />
+                            <Tab
+                                label={friendNotification
+                                    ? <Badge color="primary" badgeContent=" " variant="dot">Заявки в друзья</Badge>
+                                    : "Заявки в друзья"
+                                }
                                 id="all-requests"
                                 aria-controls="all-requests"
-                                className={styles["friends-container_block--tab"]}
+                                className={styles["main-menu-container__tab"] + " label-tab"}
                             />
-                            <Tab label="Поиск друзей" id="search-friends" aria-controls="search-friends" className={styles["friends-container_block--tab"]} />
+                            <Tab
+                                label="Поиск друзей"
+                                id="search-friends"
+                                aria-controls="search-friends"
+                                className={styles["main-menu-container__tab"] + " label-tab"}
+                            />
                         </Tabs>
                     </Box>
                 </Paper>
             </Grid>
 
+            {/* Блок возможных друзей */}
             <Grid item>
-                <Paper className={styles["friends-container--paper-block"]}>
-                    <div className={styles["friends-container_block--possible-title"]}>Возможные друзья</div>
+                <Paper className={styles["possible-container"] + " paper-block"}>
+                    <div className="block-title">Возможные друзья</div>
 
-                    <List className={styles["friends-container_block--possible-friend-item-ul"]}>
-                        {
-                            loading
-                                ? <Stack spacing={1}>
-                                    <Skeleton variant="rectangular" width={210} height={118} />
-                                    <Skeleton variant="text" />
-                                    <Skeleton variant="text" />
-                                </Stack>
-                                : possibleUsers && possibleUsers.length
-                                    ? possibleUsers.map(posUser => {
+                    <div className={styles["possible-container__block"]}>
+                        {loading
+                            ? <div className={styles["skeleton-container"]}>
+                                {skeletonsPossibleFriends.map((skeleton, index) => {
+                                    return <div key={"possible-container " + index} className={styles["skeleton-container__row"]}>
+                                        {skeleton}
+                                    </div>
+                                })}
+                            </div>
+                            : possibleUsers && possibleUsers.length
+                                ? <List className={styles["possible-container__list"]}>
+                                    {possibleUsers.map(posUser => {
                                         const userName = posUser.firstName + " " + posUser.thirdName;
 
-                                        return <ListItem className={styles["friends-container_block--possible-friend-item"]} key={posUser.id}>
-                                            <ListItemAvatar className={styles["friends-container_block--possible-friend-avatar"]}>
+                                        return <ListItem className={styles["possible-container__item"]} key={posUser.id}>
+                                            <ListItemAvatar className={styles["possible-container__item-avatar"]}>
                                                 <Avatar alt={userName} src={posUser.avatarUrl ? posUser.avatarUrl : NO_PHOTO} />
                                             </ListItemAvatar>
 
                                             <ListItemText
-                                                className={styles["friends-container_block--possible-friend-name"]}
+                                                className={styles["possible-container__item-block"]}
                                                 primary={userName}
                                                 secondary={
-                                                    <span className={styles["friends-container_block--possible-friend-action-block"]} onClick={_ => onAddUser(posUser.id)}>
-                                                        <AddIcon className={styles["friends-container_block--possible-friend-icon"]} />
-                                                        <span className={styles["friends-container_block--possible-add-to-friend"]}>Добавить в друзья</span>
+                                                    <span
+                                                        className={styles["possible-container__action"]}
+                                                        onClick={_ => onAddUser(posUser.id)}
+                                                    >
+                                                        <AddIcon className={styles["possible-container__action-icon"]} />
+                                                        <span className={styles["possible-container__action-text"]}>
+                                                            Добавить в друзья
+                                                        </span>
                                                     </span>
                                                 }
                                             />
                                         </ListItem>
-                                    })
-                                    : <div className={styles["friends-container_block--no-possible-friend"]}>
-                                        На данный момент в системе нет других пользователей
-                                    </div>
+                                    })}
+                                </List>
+                                : <div className="opacity-text">
+                                    На данный момент в системе нет других пользователей
+                                </div>
                         }
-                    </List>
+                    </div>
                 </Paper>
             </Grid>
         </Grid>

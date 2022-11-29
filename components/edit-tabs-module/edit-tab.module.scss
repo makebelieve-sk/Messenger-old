@@ -1,8 +1,15 @@
-.edit-container_main--sex-select {
-    margin-top: 16px;
-    margin-bottom: 24px;
+.edit-container__sex-select {
+    margin: 16px 0 24px 0;
 }
-
-.edit-container_main--work {
+.edit-container__work {
     margin-top: 24px;
+}
+.edit-container__form {
+    * {
+        font-size: 16px;
+
+    }
+    svg {
+        font-size: 20px;
+    }
 }

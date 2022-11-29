@@ -1,10 +1,12 @@
 @import "styles/variables";
+@import "styles/colors";
+
 .message-area-container {
     grid-column-start: 1;
     grid-row-start: 1;
     overflow: hidden;
     margin-bottom: 10px;
-    min-height: calc(100vh - 91px);
+    min-height: calc(100vh - $calcHeight);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -22,10 +24,10 @@
         .header-container--back {
             padding-left: 10px;
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
             height: 100%;
-            width: 65px;
+            width: 33%;
             color: $placeholder-grey;
             &:hover {
                 background: linear-gradient(to right, rgba(174, 183, 194, 0.12) 50%, transparent);
@@ -46,6 +48,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            width: 33%;
             .header-container--name {
                 font-size: 14px;
             }
@@ -56,9 +59,20 @@
         }
         .header-container--right-block {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: center;
-            width: 70px;
+            width: 33%;
+            .header-container--wrapper {
+                margin-right: 10px;
+                &:last-child {
+                    margin-right: 0;
+                }
+            }
+            .header-container--header-icon {
+                &:hover {
+                    cursor: pointer;
+                }
+            }
             .header-container--right-block--avatar {
                 width: 35px;
                 height: 35px;
@@ -79,6 +93,7 @@
         margin-bottom: 25px;
         .message-area-container--messages-scrollable {
             overflow-y: overlay;
+            scroll-behavior: smooth;
             display: block;
             height: auto;
             max-height: 100%;
@@ -87,6 +102,18 @@
             left: 0;
             right: 0;
             top: 0;
+            .message-area-container--upper-date-block {
+                position: fixed;
+                height: 20px;
+                font-size: 13px;
+                color: $medium-grey;
+                text-align: center;
+                border: 1px solid $very-light-grey;
+                border-radius: 15px;
+                transform: translate(-50%, 0);
+                padding: 0 7px;
+                z-index: 5;
+            }
             .message-area-container--loading {
                 margin: auto;
             }
@@ -124,6 +151,39 @@
         flex: 0 0 auto;
         align-items: center;
         justify-content: space-between;
+        position: relative;
+        .message-area-container--anchor {
+            position: absolute;
+            right: 13px;
+            bottom: 100px;
+            width: 38px;
+            height: 38px;
+            border: 1px solid $super-light-grey;
+            border-radius: 50%;
+            -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            &:hover {
+                background: rgba(174,183,194,.12);
+                cursor: pointer;
+            }
+            .message-area-container--anchor-counter {
+                border-radius: 50%;
+                width: 20px;
+                height: 20px;
+                font-size: 13px;
+                background: $blue;
+                color: $white;
+                position: absolute;
+                top: -5px;
+                right: -5px;
+            }
+            .message-area-container--anchor-icon {
+                color: $placeholder-grey;
+            }
+        }
         .messages-container--search-field-wrapper {
             width: 93%;
             position: relative;
@@ -159,13 +219,10 @@
                 word-wrap: break-word;
                 box-sizing: border-box;
                 transition: border-bottom-color .3s linear;
-                width: 592px;
+                width: 615px;
                 border: 1px solid $very-light-grey;
                 border-radius: 6px;
-                padding-right: 40px;
-                padding-top: 10px;
-                padding-bottom: 10px;
-                padding-left: 40px;
+                padding: 10px 40px;
                 cursor: text;
                 font-size: 13px;
                 font-family: Roboto, Helvetica, Arial, serif;

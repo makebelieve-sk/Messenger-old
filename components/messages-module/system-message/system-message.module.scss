@@ -1,0 +1,15 @@
+@import "styles/colors";
+
+.system-message-container {
+    width: 100%;
+    padding: 5px 20px;
+    margin: 23px 0;
+    font-size: 13px;
+    color: $medium-grey;
+    background: $white;
+    z-index: 6;
+}
+
+.hidden-element {
+    display: none;
+}

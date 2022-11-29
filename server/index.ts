@@ -10,6 +10,7 @@ import cookieParser from "cookie-parser";
 import session from "express-session";
 import passport from "passport";
 import connectRedis from "connect-redis";
+import { v4 as uuid } from "uuid";
 
 import { dbConnect, sequelize } from "./database";
 import usePassport from "./passport";
@@ -66,20 +67,32 @@ if (cluster.isPrimary) {
         console.log(`Дочерний воркер (pid=${worker.id}) отключился`);
     });
 } else {
-    console.log(`Дочерний воркер запущен (pid: ${process.pid})`);
+    console.log(`Дочерний воркер запущен (id: ${cluster.worker?.id})`);
 
     const app = express();
     const server = http.createServer(app);
-    const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, any>(server);
+    const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, any>(server, {
+        transports: ["websocket"]
+    });
 
     // TODO
+    // Клиент обращается к каждому серверу (должен к одному и тому же) - для примера - у меня создается несколько повторяющихся событий
     // Проверить закрытие воркера/сокета
     // Отлавливать событие неконнекта к редису (выдать ошибку на фронт)
     // Добавить условие включения secure: true по протоколу https (включить ssl) - режим продакшена
-    
+    // Вместо socket.id (не рекомендуется в доке) использовать id сессии (которая передается в куках и храниться на Redis-сервере)
+
     // Инициализация Redis-сервера
     const RedisStore = connectRedis(session);
     const redisClient = RedisWorks.getRedisInstance();
+
+    const publisher = redisClient.duplicate();          // Публикатор сообщений в каналы Redis
+    const subscriber = redisClient.duplicate();         // Подписка на публикуемые сообщения в каналах Redis
+
+    (async () => {
+        await publisher.connect();
+        await subscriber.connect();
+    })();
 
     const sessionMiddleware = session({
         store: new RedisStore({ client: redisClient }),
@@ -231,7 +244,7 @@ if (cluster.isPrimary) {
                         throw new Error("Не передан тип передаваемых данных");
                 }
             });
-            
+
             // Обработка данных, переданных самому себе с фронта при отправке сообщения пользователю
             socket.on(SocketActions.MESSAGE, async ({ data, friendId }) => {
                 const { userId } = data;
@@ -256,8 +269,137 @@ if (cluster.isPrimary) {
                 }
             });
 
+            // TODO
+            // решить проблему множественного ответа по сокету
+            // Начало звонка (одиночный/групповой)
+            socket.on(SocketActions.CALL, async ({ roomId, type, userFrom, users: callingUsers, isSingle, chatName }) => {
+                if (userFrom.id === userID) {
+                    // Если я уже в этой комнате, то выводим предупреждение в консоль
+                    if (Array.from(socket.rooms).includes(roomId)) {
+                        console.warn(`[CALL] Вы уже находитесь в звонке: ${chatName}`);
+                    }
+
+                    // Одиночный звонок
+                    if (isSingle) {
+                        if (callingUsers.length === 1 && callingUsers[0]) {
+                            const userTo = callingUsers[0];
+
+                            if (users[userTo.id]) {
+                                // Подключаемся в комнату (к звонку)
+                                console.log(`Инициатор звонка ${userFrom.id} подключился в комнату ${roomId} `)
+                                socket.join(roomId);
+
+                                // Уведомляем собеседника о том, что мы ему звоним
+                                socket.broadcast.to(users[userTo.id].socketID).emit(
+                                    SocketActions.NOTIFY_CALL,
+                                    { type, userFrom, roomId, isSingle, chatName }
+                                );
+                            } else {
+                                // TODO
+                                // Выводить сообщение событием CallStatus.OFFLINE
+                                console.error(`Невозможно начать звонок, так как собеседник ${userTo.friendName} оффлайн`);
+                                return null;
+                            }
+                        } else {
+                            // TODO
+                            // Создать канал ошибок
+                            console.error("Невозможно начать звонок, так как не передан собеседник");
+                            return null;
+                        }
+                    } else {
+                        // Групповой звонок
+                        // TODO
+                        // Для каждого id проверять на наличие себя в комнате (если нет - добавлять) 
+                        // и отправлять уведомление о звонке каждому собеседнику (проходить циклом)
+                    }
+                }
+            });
+
+            let i = 0;
+            // Звонок принят
+            socket.on(SocketActions.ACCEPT_CALL, async ({ roomId, callingUser, isSingle, chatName }) => {
+                if (!i) {
+                    if (roomId && callingUser) {
+                        // Если я уже в этой комнате, то выводим предупреждение в консоль
+                        if (Array.from(socket.rooms).includes(roomId)) {
+                            console.warn(`[ACCEPT_CALL] Вы уже находитесь в звонке: ${chatName}`);
+                        }
+    
+                        // Получаем всех пользователей из комнаты
+                        const clientsInRoom = Array.from(io.sockets.adapter.rooms.get(roomId) || []);
+                        console.log("Юзеры в комнате: ", clientsInRoom)
+    
+                        if (clientsInRoom && clientsInRoom.length) {
+                            clientsInRoom.forEach(clientId => {
+                                console.log(`Отправляем юзеру в комнате ${clientId} (инициатору)`)
+                                // Каждому пользователю из комнаты шлем уведомление о новом подключении (обо мне) - не создаем оффер
+                                io.to(clientId).emit(SocketActions.ADD_PEER, {
+                                    peerId: socketID,
+                                    createOffer: false
+                                });
+    
+                                console.log(`Отправляем юзеру в комнате ${socket.id} (получателю)`)
+                                // Себе отправляем информацию о каждом пользователе в комнате - создаем оффер
+                                socket.emit(SocketActions.ADD_PEER, {
+                                    peerId: clientId,
+                                    createOffer: true
+                                });
+                            });
+                        }
+    
+                        // Подключаемся в комнату
+                        socket.join(roomId);
+                        // Уведомляем собеседника о том, что мы приняли звонок
+                        // socket.broadcast.to(users[callingUser.id].socketID).emit(SocketActions.ACCEPT_CALL);
+                    }
+
+                    i++;
+                }
+            });
+
+            let j = 0;
+            // Передача кандидата
+            socket.on(SocketActions.TRANSFER_CANDIDATE, ({ peerId, iceCandidate }) => {
+                if (!j) {
+                    console.log("Передача кандидата ему: ", peerId);
+                    io.to(peerId).emit(SocketActions.GET_CANDIDATE, {
+                        peerId: socketID,
+                        iceCandidate,
+                    });
+
+                    j++;
+                }
+            });
+
+            let z = 0;
+            // Передача моего созданного предложения другим участникам звонка
+            socket.on(SocketActions.TRANSFER_OFFER, ({ peerId, sessionDescription }) => {
+                if (!z) {
+                    console.log("Передача предложения ему: ", peerId);
+                    
+                    io.to(peerId).emit(SocketActions.SESSION_DESCRIPTION, {
+                        peerId: socketID,
+                        sessionDescription,
+                    });
+
+                    z++;
+                }
+            });
+
+            // TODO
+            // Сначала сохранить id звонка (комнаты), а при отключении сокета уведомлять других учатсников звонка о выходе чела 
+            // или завершении звонка (если звонок не групповой)
+            // Здесь можно получить доступ к комнатам (выполняется чуть ранее события disconnect)
+            // socket.on("disconnecting", (reason) => {
+            // for (const room of socket.rooms) {
+            // if (room !== socket.id) {
+            // socket.to(room).emit("user has left the room", socket.id);
+            // }
+            // }
+            // });
+
             // Отключение сокета
-            socket.on("disconnect", (reason: string) => {
+            socket.on("disconnect", (reason) => {
                 console.log(`Сокет с id: ${userID} отключился по причине: ${reason}`);
 
                 delete users[userID];   // Удаляем юзера из списка юзеров

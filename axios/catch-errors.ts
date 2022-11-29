@@ -12,6 +12,8 @@ class CatchErrors {
     private errorTimeout = "Возникли проблемы с БД или время ожидания ответа превысило 15 секунд";
 
     public catch(error: any, router: NextRouter, dispatch: DispatchType): BadRequestType {
+        console.error(error);
+
         if (error.response) {
             const { status } = error.response;
 

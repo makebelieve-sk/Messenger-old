@@ -1,65 +1,123 @@
+@import "styles/colors";
 @import "styles/variables";
-.friends-container--paper-block {
-    padding: 10px 20px;
-    .friends-container_block--box-container {
-        border-bottom: 1px;
-        border-color: "divider";
-        .friends-container_block--tab {
-            padding: 12px 12px 12px 12px;
-        }
-        .friends-container_block--box-container--button {
-            font-size: 12px;
-            margin-top: 10px;
-        }
-    }
-    .friends-container_block--possible-title {
-        font-size: 14px;
-    }
-    .friends-container_block--possible-friend-item-ul {
-        width: "100%";
-        background-color: "background.paper";
-        & li:last-child {
-            padding: 0;
-        }
-        .friends-container_block--no-possible-friend {
-            color: $light-grey;
-            font-size: 12px;
-            text-align: center;
-        }
-        .friends-container_block--possible-friend-item {
-            padding: 0 0 10px 0;
-            color: $blue;
+
+.content-container {
+    height: calc(100vh - $calcHeight1);
+    .skeleton-container {
+        width: 100%;
+        &__row {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            .friends-container_block--possible-friend-avatar {
-                width: 45px;
-                min-width: 45px;
-                &:hover {
-                    cursor: pointer;
-                }
-            }
-            .friends-container_block--possible-friend-name {
-                span {
-                    font-size: 12px;
-                }
-                .friends-container_block--possible-friend-action-block {
-                    width: 100%;
-                    display: flex;
-                    align-items: center;
-                    color: $blue;
-                    &:hover {
-                        cursor: pointer;
-                        text-decoration: underline;
-                    }
-                    .friends-container_block--possible-friend-icon {
-                        height: 15px;
-                        width: 15px;
-                    }
-                    .friends-container_block--possible-add-to-friend {
-                        font-size: 12px;
-                    }
-                }
+            width: 100%;
+        }
+        &__text {
+            width: 45%;
+            margin-right: 10px;
+            height: 38px;
+            &:last-child {
+                margin-right: 0;
             }
         }
+        &__input {
+            width: 100%;
+            height: 30px;
+        }
+        &__block {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            width: 100%;
+        }
+        &__img {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+    }
+}
+.main-menu-container__block {
+    border-bottom: 1px;
+    border-color: "divider";
+    .main-menu-container__tab {
+        padding: 10px 12px;
+    }
+}
+.possible-container {
+    height: 327px;
+    &__block {
+        width: 100%;
+        height: 90%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .skeleton-container {
+        width: 100%;
+        &__row {
+            margin-bottom: 5px;
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+        &__block {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+        }
+        &__img {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+        &__text {
+            width: 60%;
+            height: 38px;
+        }
+    }
+    &__list {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+    &__item {
+        padding: 0 0 10px 0;
+        color: $blue;
+        display: flex;
+        align-items: center;
+        &:last-child {
+            padding-bottom: 0;
+        }
+    }
+    &__item-avatar {
+        width: 45px;
+        min-width: 45px;
+        &:hover {
+            cursor: pointer;
+        }
+    }
+    &__item-block {
+        span {
+            font-size: 12px;
+        }
+    }
+    &__action {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        color: $blue;
+        &:hover {
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    }
+    &__action-icon {
+        height: 15px;
+        width: 15px;
+    }
+    &__action-text {
+        font-size: 12px;
     }
 }

@@ -1,29 +1,32 @@
 import React from "react";
-import { v4 as uuid } from "uuid";
 import { useRouter } from "next/router";
+import { v4 as uuid } from "uuid";
 import SendIcon from "@mui/icons-material/Send";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import SentimentSatisfiedAltIcon from "@mui/icons-material/SentimentSatisfiedAlt";
 import AttachFileOutlinedIcon from "@mui/icons-material/AttachFileOutlined";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import CallOutlinedIcon from "@mui/icons-material/CallOutlined";
+import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
 import EmojiPicker, { EmojiClickData, EmojiStyle } from "emoji-picker-react";
-import { Avatar, CircularProgress, Popover, Skeleton, Tooltip, Typography } from "@mui/material";
+import { Avatar, Button, CircularProgress, Popover, Skeleton, Tooltip, Typography } from "@mui/material";
 import { SocketIOClient } from "../../components/app";
-import MessagesHandler from "../../components/messages-handler";
-import { ApiRoutes, MessageReadStatus, MessageTypes, Pages, SocketActions } from "../../config/enums";
+import SystemMessage from "../../components/messages-module/system-message";
+import MessagesHandler from "../../components/messages-module/scrolling-messages-block";
+import MessageComponent from "../../components/messages-module";
+import { ApiRoutes, CallStatus, CallTypes, ErrorTexts, MessageReadStatus, MessageTypes, Pages, SocketActions } from "../../config/enums";
 import { useAppDispatch, useAppSelector } from "../../hooks/useGlobalState";
 import { selectUserState } from "../../state/user/slice";
-import { deleteFromTempChat, selectMessagesState, setMessage, setMessages } from "../../state/messages/slice";
+import { setModalVisible, setCallingUser, setStatus } from "../../state/calls/slice";
+import { deleteFromTempChat, selectMessagesState, setCounter, setMessage, setMessages, setVisibleUnReadMessages } from "../../state/messages/slice";
 import CatchErrors from "../../axios/catch-errors";
 import { IMessage } from "../../types/models.types";
 import Request from "../../common/request";
 import { isSingleChat, NO_PHOTO } from "../../config";
+import Message from "../../common/message";
 
 import styles from "../../styles/pages/message-area.module.scss";
-
-// TODO
-// Переработать скролл на такой как в телеге (боковой скролл)
-// Скроллить до самого конца (при входе) и при получении (отправке) нового сообщения
 
 export interface IFriendInfo {
     id: string;
@@ -38,15 +41,20 @@ export default function MessageArea() {
     const [anchorEl, setAnchorEl] = React.useState<HTMLOrSVGElement | null | any>(null);
     const [friendInfo, setFriendInfo] = React.useState<IFriendInfo | null>(null);
     const [anchorEmoji, setAnchorEmoji] = React.useState<SVGSVGElement | null>(null);
+    const [anchorCall, setAnchorCall] = React.useState<HTMLOrSVGElement | null | any>(null);
     const [page, setPage] = React.useState(0);
     const [isMore, setIsMore] = React.useState(false);
     const [beforeHeight, setBeforeHeight] = React.useState<number>();
     const [chatId, setChatId] = React.useState<string | null>(null);
+    const [visible, setVisible] = React.useState(false);
+    const [processedMessages, setProcessedMessages] = React.useState<React.ReactElement[]>([]);
+    const [scrollOnDown, setScrollOnDown] = React.useState(false);
+    const [upperDate, setUpperDate] = React.useState<{ text: string; left: number; top: number } | null>(null);
 
     const socket = React.useContext(SocketIOClient);
     const router = useRouter();
     const dispatch = useAppDispatch();
-    const { messages } = useAppSelector(selectMessagesState);
+    const { messages, counter, visibleUnReadMessages } = useAppSelector(selectMessagesState);
     const { user } = useAppSelector(selectUserState);
 
     const inputRef = React.useRef<HTMLDivElement>(null);
@@ -54,6 +62,7 @@ export default function MessageArea() {
 
     const popoverId = Boolean(anchorEl) ? "popover-item-messages-header" : undefined;
     const emojiPopoverId = Boolean(anchorEmoji) ? "emoji-popover" : undefined;
+    const popoverCallId = Boolean(anchorCall) ? "call-popover" : undefined;
 
     // Запоминаем id чата
     React.useEffect(() => {
@@ -78,8 +87,8 @@ export default function MessageArea() {
                     Request.post(ApiRoutes.getFriendInfo, { chatId, userId: user.id }, setLoadingFriendInfo,
                         (data: { success: boolean, friendInfo: IFriendInfo | null }) => setFriendInfo(data.friendInfo),
                         (error: any) => {
-                            if (error.response.data.message === `Пользователь с id = ${user.id} не найден`) {
-                                router.replace(Pages.profile);
+                            if (error.response.data.message === ErrorTexts.NOT_TEMP_CHAT_ID) {
+                                router.replace(Pages.messages);
                             } else {
                                 CatchErrors.catch(error, router, dispatch);
                             }
@@ -90,8 +99,6 @@ export default function MessageArea() {
                 // Если чат - групповой
                 console.log("--Чат - групповой--")
             }
-        } else {
-            CatchErrors.catch("Не передан уникальный идентификатор чата", router, dispatch)
         }
     }, [chatId, user]);
 
@@ -109,6 +116,138 @@ export default function MessageArea() {
         }
     }, [user, friendInfo]);
 
+    // Обрабатываем сообщения 
+    React.useEffect(() => {
+        if (messages && messages.length) {
+            if (user && friendInfo) {
+                const procMessages = messages.reduce((acc, message, index) => {
+                    const visibleParams = checkIsFirstOrLast(
+                        message,
+                        index - 1 >= 0 ? messages[index - 1] : null,
+                        index + 1 <= messages.length ? messages[index + 1] : null
+                    );
+
+                    // Проверка на создание системного сообщения "Дата"
+                    if (index === 0 || (index - 1 >= 0 && getDate(messages[index - 1].createDate) !== getDate(message.createDate))) {
+                        acc.push(<SystemMessage key={uuid()} date={message.createDate} />);
+                    }
+
+                    // Показ системного сообщения "Непрочитанные сообщения"
+                    if (visibleUnReadMessages === message.id && visible) {
+                        acc.push(<SystemMessage key={message.id + "-unread-message"} />);
+                    }
+
+                    acc.push(<MessageComponent
+                        key={uuid()}
+                        user={user}
+                        message={message}
+                        friendInfo={friendInfo}
+                        visibleParams={visibleParams}
+                    />);
+
+                    return acc;
+                }, [] as React.ReactElement[]);
+
+                setProcessedMessages(procMessages);
+            }
+        }
+    }, [messages]);
+
+    // Обнуляем счетчик непрочитанных сообщений в якоре
+    React.useEffect(() => {
+        if (!visible) {
+            dispatch(setCounter(0));
+        } else {
+            dispatch(setVisibleUnReadMessages(""));
+        }
+    }, [visible]);
+
+    // Обработка скролла (нет доступа к состоянию)
+    React.useEffect(() => {
+        function scrollHandler() {
+            if (messagesRef.current) {
+                const refCurrentTop = messagesRef.current.getBoundingClientRect().top;
+
+                const elem = document.getElementById("end-messages");
+
+                // Показываем/скрываем кнопку "Вниз"
+                if (elem) {
+                    const elemTop = elem.getBoundingClientRect().top;
+                    const clientHeight = messagesRef.current.clientHeight;
+
+                    if (elemTop - refCurrentTop - clientHeight > 200) {
+                        setVisible(true);
+                        setScrollOnDown(false);
+                    } else if (elemTop - refCurrentTop - clientHeight === 0) {
+                        setScrollOnDown(true);
+                    } else {
+                        setVisible(false);
+                        dispatch(setCounter(0));
+                        setScrollOnDown(false);
+                    }
+                }
+
+                const refCurrentLeft = messagesRef.current.getBoundingClientRect().left;
+                const refCurrentWidth = messagesRef.current.clientWidth;
+                const node = document.elementFromPoint(refCurrentLeft + 11, refCurrentTop + 30);
+
+                if (node && node.id) {
+                    setUpperDate({ text: node.id, left: refCurrentLeft + refCurrentWidth / 2, top: refCurrentTop + 5 });
+                }
+                if (node && node.classList.contains("system-message-container")) {
+                    setUpperDate(null);
+                }
+            }
+        };
+
+        messagesRef.current?.addEventListener("scroll", scrollHandler);
+
+        return () => {
+            messagesRef.current?.removeEventListener("scroll", scrollHandler);
+            dispatch(setCounter(0));
+            dispatch(setVisibleUnReadMessages(""));
+            setAnchorEl(null);
+            setAnchorEmoji(null);
+            setAnchorCall(null);
+        }
+    }, []);
+
+    // Проверка на первый/последний элемент для сообщения в блоке (показ имени, аватара)
+    const checkIsFirstOrLast = (message: IMessage, prevMessage: IMessage | null, postMessage: IMessage | null) => {
+        let isFirst = false;
+        let isLast = false;
+
+        // Если нет предыдущего сообщения - значит оно первое (показываем имя) или
+        // Если есть следующее сообщение и авторы текущего и предыдущего сообщений разные - значит оно первое (показываем имя)
+        if (!prevMessage || prevMessage && prevMessage.userId !== message.userId) {
+            isFirst = true;
+        }
+
+        // Если нет последующего сообщения - значит оно последнее (показываем имя) или
+        // Если есть следующее сообщение и авторы текущего и предыдущего сообщений разные - значит оно первое (показываем имя)
+        if (!postMessage || postMessage && postMessage.userId !== message.userId) {
+            isLast = true;
+        }
+
+        return { isFirst, isLast };
+    };
+
+    // Получение даты
+    const getDate = (date: string) => {
+        return date && date.length ? new Date(date).getDate() : null;
+    };
+
+    // Скролл до самого низа
+    const onScrollDown = () => {
+        if (messagesRef.current) {
+            messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+
+            if (counter) {
+                dispatch(setCounter(0));
+            }
+        }
+    };
+
     // Обработка клика на кнопку
     const onSubmit = () => {
         if (!user) {
@@ -124,35 +263,34 @@ export default function MessageArea() {
         if (inputRef.current && inputRef.current.textContent && socket && user && chatId && friendInfo) {
             const preparedValue = inputRef.current.textContent.replace(/\`\'/g, "\"");
 
-            // TODO
-            // Создать класс (сущность) сообщения типа Текст + добавить в message поле аватарки друга
             // Объект сообщения
-            const message = {
-                id: uuid(),
+            const message = new Message({
                 userId: user.id,
                 chatId,
                 type: MessageTypes.MESSAGE,
-                createDate: new Date().toUTCString(),
                 message: preparedValue,
                 isRead: MessageReadStatus.NOT_READ
-            } as IMessage;
+            }) as IMessage;
 
             // Очищаем инпут и ставим на него фокус
             inputRef.current.textContent = "";
             inputRef.current.focus();
 
             // Добавляем сообщение в массив сообщений для отрисовки
-            dispatch(setMessage(message));
+            dispatch(setMessage({ message }));
+
+            // Обнуляем глобальный флаг "Непрочитанный сообщения"
+            dispatch(setVisibleUnReadMessages(""));
 
             // Отправка на сокет
             socket.emit(SocketActions.MESSAGE, { data: message, friendId: friendInfo.id });
 
             // Сохраняем сообщение в бд
             Request.post(
-                ApiRoutes.saveMessage, 
-                { message, isSingleChat: isSingleChat(chatId), userTo: friendInfo.id }, 
-                () => dispatch(deleteFromTempChat(chatId)), 
-                undefined, 
+                ApiRoutes.saveMessage,
+                { message, isSingleChat: isSingleChat(chatId), userTo: friendInfo.id },
+                () => dispatch(deleteFromTempChat(chatId)),
+                undefined,
                 (error: any) => CatchErrors.catch(error, router, dispatch)
             );
         }
@@ -176,33 +314,55 @@ export default function MessageArea() {
     };
 
     // Обработка скролла - загружаем еще сообщения
-    const onScroll = () => {
-        if (messagesRef.current && isMore) {
+    const onWheel = () => {
+        if (messagesRef.current && isMore && user && friendInfo) {
             const offset = messagesRef.current.scrollTop;
 
-            if (offset < 55) {
-                if (user && friendInfo) {
-                    setPage(page + 1);
-                    let before = messagesRef.current.scrollHeight;
+            if (offset < 150) {
+                const currentPage = page + 1;
+                let before = messagesRef.current.scrollHeight;
 
-                    Request.post(ApiRoutes.getMessages, { userId: user.id, chatId, page: page + 1 }, undefined,
-                        (data: { success: boolean, messages: IMessage[], isMore: boolean }) => {
-                            dispatch(setMessages(data.messages));
-                            setIsMore(data.isMore);
-                            if (!data.isMore) {
-                                const loadingIsMore = document.querySelector("#loading-is-more");
-                                if (loadingIsMore) before -= loadingIsMore.clientHeight;
-                            }
-                            setBeforeHeight(before - offset);
-                        },
-                        (error: any) => CatchErrors.catch(error, router, dispatch)
-                    );
-                }
+                Request.post(ApiRoutes.getMessages, { userId: user.id, chatId, page: currentPage }, undefined,
+                    (data: { success: boolean, messages: IMessage[], isMore: boolean }) => {
+                        dispatch(setMessages(data.messages));
+                        setIsMore(data.isMore);
+                        if (!data.isMore) {
+                            const loadingIsMore = document.getElementById("loading-more-messages");
+                            if (loadingIsMore) before -= loadingIsMore.clientHeight;
+                        }
+                        setBeforeHeight(before - offset);
+                    },
+                    (error: any) => CatchErrors.catch(error, router, dispatch)
+                );
+
+                setPage(currentPage);
             }
         }
     };
 
+    // Вызов модального окна для видео-разговора
+    const onVideoCall = () => {
+        if (friendInfo && socket && user) {
+            dispatch(setModalVisible(true));
+            dispatch(setCallingUser(friendInfo));
+            dispatch(setStatus(CallStatus.SET_CONNECTION));
+
+            // Отправка на сокет
+            socket.emit(SocketActions.CALL, { 
+                roomId: uuid(), 
+                type: CallTypes.VIDEO, 
+                userFrom: user, 
+                users: [friendInfo], 
+                isSingle: true,
+                // TODO
+                // Запоминать в глобальном состоянии имя чата (личное или название беседы)
+                chatName: user.firstName + " " + user.thirdName,
+            });
+        }
+    };
+
     return <div className={styles["message-area-container"]}>
+        {/* Header */}
         <div className={styles["message-area-container--header"]}>
             {friendInfo && !loadingFriendInfo
                 ? <>
@@ -217,48 +377,126 @@ export default function MessageArea() {
                     </div>
 
                     <div className={styles["header-container--right-block"]}>
-                        <MoreHorizIcon sx={{ cursor: "pointer" }} aria-describedby={popoverId} onClick={event => setAnchorEl(event.currentTarget)} />
-                        <Popover
-                            id={popoverId}
-                            open={Boolean(anchorEl)}
-                            anchorEl={anchorEl}
-                            onClose={() => setAnchorEl(null)}
-                            anchorOrigin={{
-                                vertical: "bottom",
-                                horizontal: "left",
-                            }}
-                        >
-                            <Typography sx={{ p: 2, cursor: "pointer", fontSize: 14 }} onClick={_ => console.log(111)}>
-                                Показать вложения
-                            </Typography>
-                        </Popover>
+                        <div className={styles["header-container--wrapper"]}>
+                            <CallOutlinedIcon 
+                                className={styles["header-container--header-icon"]} 
+                                aria-describedby={popoverCallId} 
+                                onClick={event => setAnchorCall(event.currentTarget)} 
+                            />
+                            <Popover
+                                id={popoverCallId}
+                                open={Boolean(anchorCall)}
+                                anchorEl={anchorCall}
+                                onClose={() => setAnchorCall(null)}
+                                anchorOrigin={{
+                                    vertical: "bottom",
+                                    horizontal: "left",
+                                }}
+                            >
+                                <Button 
+                                    variant="text"
+                                    size="small"
+                                    sx={{ padding: "10px 10px 5px 10px", fontSize: 12, display: "flex", alignItems: "center", color: "#000000" }}
+                                    onClick={_ => console.log(111)}
+                                >
+                                    <CallOutlinedIcon fontSize="small" sx={{ marginRight: "10px" }} />Аудиозвонок
+                                </Button>
+                                <Button 
+                                    variant="text"
+                                    size="small"
+                                    sx={{ padding: "5px 10px 10px 10px", fontSize: 12, display: "flex", alignItems: "center", color: "#000000" }} 
+                                    onClick={onVideoCall}
+                                >
+                                    <VideocamOutlinedIcon fontSize="small" sx={{ marginRight: "10px" }} />Видеозвонок
+                                </Button>
+                            </Popover>
+                        </div>
 
-                        <Avatar
-                            alt={friendInfo.friendName}
-                            src={friendInfo.avatarUrl ? friendInfo.avatarUrl : NO_PHOTO}
-                            className={styles["header-container--right-block--avatar"]}
-                        />
+                        <div className={styles["header-container--wrapper"]}>
+                            <MoreHorizIcon 
+                                className={styles["header-container--header-icon"]} 
+                                aria-describedby={popoverId} 
+                                onClick={event => setAnchorEl(event.currentTarget)} 
+                            />
+                            <Popover
+                                id={popoverId}
+                                open={Boolean(anchorEl)}
+                                anchorEl={anchorEl}
+                                onClose={() => setAnchorEl(null)}
+                                anchorOrigin={{
+                                    vertical: "bottom",
+                                    horizontal: "left",
+                                }}
+                            >
+                                <Typography sx={{ p: 2, cursor: "pointer", fontSize: 14 }} onClick={_ => console.log(111)}>
+                                    Показать вложения
+                                </Typography>
+                            </Popover>
+                        </div>
+
+                        <div className={styles["header-container--wrapper"]}>
+                            <Avatar
+                                alt={friendInfo.friendName}
+                                src={friendInfo.avatarUrl ? friendInfo.avatarUrl : NO_PHOTO}
+                                className={styles["header-container--right-block--avatar"]}
+                            />
+                        </div>
                     </div>
                 </>
                 : <Skeleton variant="text" className={styles["header-container--friend-name-loading"]} />
             }
         </div>
 
+        {/* Список сообщений */}
         <div className={styles["message-area-container--messages"]}>
-            <div className={styles["message-area-container--messages-scrollable"]} ref={messagesRef} onScroll={onScroll}>
+            <div className={styles["message-area-container--messages-scrollable"]} ref={messagesRef} onWheel={onWheel}>
+                {upperDate
+                    ? <div className={styles["message-area-container--upper-date-block"]} style={{ left: upperDate.left, top: upperDate.top }}>
+                        {upperDate.text}
+                    </div>
+                    : null
+                }
+
                 {loading || !user
                     ? <div className={styles["message-area-container--loading"]}><CircularProgress /></div>
-                    : messages && messages.length && friendInfo
+                    : processedMessages && processedMessages.length && friendInfo
                         ? <div className={styles["message-area-container--messages-wrapper"]}>
-                            {isMore ? <div id="loading-messages-is-more" className={styles["message-area-container--loading-is-more"]}><CircularProgress /></div> : null}
-                            <MessagesHandler messages={messages} user={user} messagesRef={messagesRef} beforeHeight={beforeHeight} friendInfo={friendInfo} />
+                            {isMore
+                                ? <div id="loading-more-messages" className={styles["message-area-container--loading-is-more"]}>
+                                    <CircularProgress />
+                                </div>
+                                : null
+                            }
+
+                            <MessagesHandler
+                                messages={processedMessages}
+                                messagesRef={messagesRef}
+                                beforeHeight={beforeHeight}
+                                user={user}
+                                scrollOnDown={scrollOnDown}
+                                onScrollDown={onScrollDown}
+                            />
+
+                            <div id="end-messages" />
                         </div>
                         : <div className={styles["message-area-container--no-history"]}>История диалогов пуста</div>
                 }
             </div>
         </div>
 
+        {/* Отправка */}
         <form noValidate autoComplete="off" className={styles["messages--submit-block"]}>
+            {visible
+                ? <div className={styles["message-area-container--anchor"]} onClick={onScrollDown}>
+                    {counter
+                        ? <span className={styles["message-area-container--anchor-counter"]}>{counter}</span>
+                        : null
+                    }
+                    <ArrowDownwardIcon className={styles["message-area-container--anchor-icon"]} />
+                </div>
+                : null
+            }
+
             <div className={styles["messages-container--search-field-wrapper"]}>
                 <Tooltip title="Выбор смайлика" placement="top">
                     <SentimentSatisfiedAltIcon

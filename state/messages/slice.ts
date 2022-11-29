@@ -2,13 +2,15 @@ import { createSlice } from "@reduxjs/toolkit";
 import reducers from "./reducers";
 import { InitialStateType, RootState } from "../../types/redux.types";
 
-export type MessageType = Pick<InitialStateType, "dialogs" | "messages" | "tempChats">;
+export type MessageType = Pick<InitialStateType, "dialogs" | "messages" | "tempChats" | "counter" | "visibleUnReadMessages">;
 
 // Начальное состояние
 export const initialState: MessageType = {
   dialogs: [],
   messages: [],
-  tempChats: {}
+  tempChats: {},
+  counter: 0,
+  visibleUnReadMessages: "",
 };
 
 export const messagesSlice = createSlice({
@@ -21,7 +23,7 @@ export const messagesSlice = createSlice({
 export const selectMessagesState = (state: RootState) => state.messages;
 
 // Экшены
-export const { setDialogs, setMessage, setMessages, setTempChat, deleteFromTempChat } = messagesSlice.actions;
+export const { setDialogs, setMessage, setMessages, setTempChat, deleteFromTempChat, setCounter, setVisibleUnReadMessages } = messagesSlice.actions;
 
 // Редьюсер
 export default messagesSlice.reducer;

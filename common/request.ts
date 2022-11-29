@@ -1,9 +1,15 @@
 import axiosInstanse from "../axios";
 import { ApiRoutes } from "../config/enums";
 
+// Класс, отвечающий за запросы к серверу
 class Request {
     // GET запрос на сервер
-    async get(route: ApiRoutes, setLoading: ((value: any) => any) | undefined, successCb: (result: any) => any, failedCb: (error: string) => any) {
+    async get(
+        route: ApiRoutes, 
+        setLoading: ((value: any) => any) | undefined, 
+        successCb: (result: any) => any, 
+        failedCb: (error: string) => any
+    ) {
         setLoading ? setLoading(true) : undefined;
 
         axiosInstanse
@@ -15,16 +21,20 @@ class Request {
                     successCb(data);
                 }
             })
-            .catch((error) => {
-                failedCb(error)
-            })
+            .catch(failedCb)
             .finally(() => {
                 setLoading ? setLoading(false) : undefined;
             });
     };
 
     // POST запрос на сервер
-    async post(route: ApiRoutes, data: any, setLoading: ((value: React.SetStateAction<boolean>) => void) | undefined, successCb: ((result: any) => any) | undefined, failedCb: (error: string) => any) {
+    async post(
+        route: ApiRoutes, 
+        data: any, 
+        setLoading: ((value: React.SetStateAction<boolean>) => void) | undefined, 
+        successCb: ((result: any) => any) | undefined, 
+        failedCb: (error: string) => any
+    ) {
         setLoading ? setLoading(true) : undefined;
 
         axiosInstanse

@@ -1,13 +1,36 @@
+@use "sass:math";
+@import "../../styles/colors.scss";
+
 .menu-container {
     padding-top: 2%;
-    .menu-container--menu-item {
-        padding-left: 10px;
-        padding-right: 20px;
-        div {
-            padding-left: 10px;
+    nav {
+        border-bottom: 1px solid $super-light-grey;
+    }
+    &__menu-list {
+        background: $mainBackground;
+    }
+    &__menu-item {
+        padding: 0 20px 0 10px;
+        position: relative;
+        span {
+            margin-left: 10px;
+            font-size: 13px;
+            line-height: math.div(34, 14) * 100%;
+            color: $black;
         }
-        .menu-container--badge {
-            margin-left: 20px;
+    }
+    &__badge {
+        position: absolute;
+        right: 15px;
+        span {
+            background: $noticeGrey;
+            color: $white;
         }
+    }
+    &__down-info {
+        margin-top: 10px;
+        line-height: 19px;
+        font-size: 12px;
+        color: $medium-grey;
     }
 }

@@ -7,13 +7,22 @@ export default {
     setDialogs: (state: MessageType, action: PayloadAction<IDialog[]>) => {
         state.dialogs = action.payload;
     },
-    setMessage: (state: MessageType, action: PayloadAction<IMessage>) => {
-        const messageId = action.payload.id;
+    setMessage: (state: MessageType, action: PayloadAction<{ message: IMessage, isVisibleUnReadMessages?: string, updateCounter?: boolean }>) => {
+        const { message, isVisibleUnReadMessages, updateCounter } = action.payload;
+        const messageId = message.id;
 
         const findMessage = state.messages.find(message => message.id === messageId);
 
         if (!findMessage) {
-            state.messages = [ ...state.messages, action.payload ];
+            state.messages = [ ...state.messages, message ];
+
+            if (updateCounter) {
+                state.counter += 1;
+            }
+        }
+
+        if (!state.visibleUnReadMessages && isVisibleUnReadMessages) {
+            state.visibleUnReadMessages = isVisibleUnReadMessages;
         }
     },
     setMessages: (state: MessageType, action: PayloadAction<IMessage[]>) => {
@@ -27,5 +36,11 @@ export default {
     },
     deleteFromTempChat: (state: MessageType, action: PayloadAction<string>) => {
         delete state.tempChats[action.payload];
+    },
+    setCounter: (state: MessageType, action: PayloadAction<number | undefined>) => {
+        state.counter = action.payload === 0 ? 0 : state.counter + 1;
+    },
+    setVisibleUnReadMessages: (state: MessageType, action: PayloadAction<string>) => {
+        state.visibleUnReadMessages = action.payload;
     },
 };

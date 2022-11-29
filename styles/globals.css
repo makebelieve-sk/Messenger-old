@@ -1,13 +1,29 @@
-html,
-body {
+html, body {
     padding: 0;
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
     position: relative;
     min-height: 100%;
     height: 100%;
-    background: #edeef0;
+    width: 100%;
 }
+#__next {
+    min-height: 100%;
+    height: 100%;
+    width: 100%;
+}
+
+/* Стилизация скролла */
+::-webkit-scrollbar {
+    width: 14px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    border: 4px solid rgba(0, 0, 0, 0);
+    background-clip: padding-box;
+    border-radius: 9999px;
+    background-color: #AAAAAA;
+  }
 
 a {
     color: inherit;

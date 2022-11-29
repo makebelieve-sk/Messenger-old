@@ -3,7 +3,7 @@ import { createClient } from "redis";
 export type RedisClient = ReturnType<typeof createClient>;
 
 export default class RedisWorks {
-    static client: RedisClient | null = null;
+    static client: RedisClient;
 
     // Получение экземпляра клиента Redis-сервера
     static getRedisInstance() {
@@ -11,7 +11,7 @@ export default class RedisWorks {
         (async () => this.client && await this.client.connect())();
 
         this.client.on("error", (error: string) => {
-            const errorText = "Ошибка при создании клиента Redis: " + error;
+            const errorText = "Ошибка в работе клиента Redis: " + error;
             console.log(errorText);
             throw errorText;
         });
@@ -20,9 +20,17 @@ export default class RedisWorks {
     };
 
     // Получение значения по ключу
-    static async get(key: string) {
+    static async get(key: string): Promise<string | undefined> {
         try {
-            return this.client ? await this.client.get(key) : null;
+            return new Promise(resolve => {
+                (this.client as any).get(key, function(error: string | undefined, value: string | undefined) {
+                    if (error) {
+                        throw error;
+                    }
+
+                    resolve(value);
+                });
+            });
         } catch (error) {
             const errorText = "Произошла ошибка при получении значения по ключу из Redis: " + error;
             console.log(errorText);

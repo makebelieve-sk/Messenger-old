@@ -11,8 +11,7 @@ enum ApiRoutes {
     logout = "/logout",
     //----userInfo------
     getUser = "/get-user",
-    editMain = "/edit-main",
-    editContacts = "/edit-contacts",
+    editInfo = "/edit-info",
     getUserDetail = "/get-user-detail",
     //----file-----------
     uploadImage = "/upload-image",
@@ -54,6 +53,7 @@ enum Pages {
     settings = "/settings",
     help = "/help",
     edit = "/edit",
+    aboutUs = "/about-us",
 };
 
 enum FriendsTab {
@@ -66,14 +66,26 @@ enum FriendsTab {
 };
 
 enum SocketActions {
+    // ---------------USERS------------------
     GET_ALL_USERS = "GET_ALL_USERS",
     GET_NEW_USER = "GET_NEW_USER",
     ADD_TO_FRIENDS = "ADD_TO_FRIENDS",
     UNSUBSCRIBE = "UNSUBSCRIBE",
     FRIENDS = "FRIENDS",
+    // ---------------MESSAGES---------------
     MESSAGE = "MESSAGE",
     SEND_MESSAGE = "SEND_MESSAGE",
     SET_TEMP_CHAT_ID = "SET_TEMP_CHAT_ID",
+    // --------------CALLS-------------------
+    CALL = "CALL",
+    NOTIFY_CALL = "NOTIFY_CALL",
+    ACCEPT_CALL = "ACCEPT_CALL",
+    // --------------WEBRTC------------------
+    ADD_PEER = "ADD_PEER",
+    TRANSFER_CANDIDATE = "TRANSFER_CANDIDATE",
+    TRANSFER_OFFER = "TRANSFER_OFFER",
+    SESSION_DESCRIPTION = "SESSION_DESCRIPTION",
+    GET_CANDIDATE = "GET_CANDIDATE"
 };
 
 enum MessageTypes {
@@ -95,7 +107,26 @@ enum Times {
 };
 
 enum RedisChannel {
-    TEMP_CHAT_ID = "TEMP_CHAT_ID"
+    TEMP_CHAT_ID = "TEMP_CHAT_ID",
+};
+
+enum ErrorTexts {
+    NOT_TEMP_CHAT_ID = "id собеседника не найдено, возможно, это временный чат",
+};
+
+enum CallTypes {
+    AUDIO = "AUDIO",
+    VIDEO = "VIDEO",
+};
+
+enum CallStatus {
+    NOT_CALL = "NOT_CALL",
+    SET_CONNECTION = "SET_CONNECTION",
+    WAIT = "WAIT",
+    NEW_CALL = "NEW_CALL",
+    ACCEPT = "ACCEPT",
+    REJECTED = "REJECTED",
+    OFFLINE = "OFFLINE",
 };
 
 export {
@@ -109,4 +140,7 @@ export {
     MessageReadStatus,
     Times,
     RedisChannel,
+    ErrorTexts,
+    CallTypes,
+    CallStatus,
 };
