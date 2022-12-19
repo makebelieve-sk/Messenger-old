@@ -1,8 +1,23 @@
-import axiosInstanse from "../axios";
-import { ApiRoutes } from "../config/enums";
+import axios, { AxiosInstance } from "axios";
+import { ApiRoutes } from "../types/enums";
 
 // Класс, отвечающий за запросы к серверу
 class Request {
+    private instance: AxiosInstance;
+
+    constructor() {
+        this.instance = axios.create({
+            baseURL: process.env.SERVER_URL,
+            withCredentials: true,
+            timeout: 15000,
+            headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": process.env.SERVER_URL ?? false,
+                "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE"
+            }
+        });
+    };
+
     // GET запрос на сервер
     async get(
         route: ApiRoutes, 
@@ -12,7 +27,7 @@ class Request {
     ) {
         setLoading ? setLoading(true) : undefined;
 
-        axiosInstanse
+        this.instance
             .get(route)
             .then(response => {
                 const data = response.data;
@@ -37,7 +52,7 @@ class Request {
     ) {
         setLoading ? setLoading(true) : undefined;
 
-        axiosInstanse
+        this.instance
             .post(route, data)
             .then(response => {
                 const data = response.data;
@@ -53,4 +68,5 @@ class Request {
     };
 };
 
+// Pattern: Singleton
 export default new Request();

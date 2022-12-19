@@ -1,5 +1,5 @@
 import { Request, Response, Express } from "express";
-import { ApiRoutes, HTTPStatuses } from "../../config/enums";
+import { ApiRoutes, HTTPStatuses } from "../../types/enums";
 import { IFormValues } from "../../pages/edit";
 import { IUser, IUserDetails } from "../../types/models.types";
 import { sequelize } from "../database";

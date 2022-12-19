@@ -2,7 +2,7 @@ import { DataTypes, Model } from "sequelize";
 import { sequelize } from "..";
 import { IChat } from "../../../types/models.types";
 
-// Тип модели Messages, унаследованного от Sequelize
+// Тип модели Chats, унаследованного от Sequelize
 export type ChatsDetailsInstance = IChat & Model & {};
 
 const ChatsModel = sequelize.define<ChatsDetailsInstance, IChat>("Chats", {
@@ -12,7 +12,7 @@ const ChatsModel = sequelize.define<ChatsDetailsInstance, IChat>("Chats", {
     allowNull: false,
   },
   name: {
-    type: DataTypes.UUIDV4,
+    type: DataTypes.TEXT,
     allowNull: true,
   },
   userIds: {

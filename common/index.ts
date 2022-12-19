@@ -46,3 +46,17 @@ export const isSingleChat = (id: string) => id.length === 36;
 
 export const NO_PHOTO = "/img/no-avatar.jpg";
 export const REQUIRED_FIELD = "Заполните поле";
+
+export const rtcSettings = {
+    audioCall: {
+        audio: true,
+        video: false,
+    },
+    videoCall: {
+        audio: true,
+        video: {
+            width: 1280,
+            height: 720,
+        }
+    }
+};

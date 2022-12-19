@@ -7,11 +7,11 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Copyright from "../components/copyright";
 import { useAppDispatch } from "../hooks/useGlobalState";
 import { setUser } from "../state/user/slice";
-import { ApiRoutes, Pages } from "../config/enums";
-import CatchErrors from "../axios/catch-errors";
+import { ApiRoutes, Pages } from "../types/enums";
+import CatchErrors from "../core/catch-errors";
 import { IUser } from "../types/models.types";
-import { COOKIE_NAME, REQUIRED_FIELD } from "../config";
-import Request from "../common/request";
+import { COOKIE_NAME, REQUIRED_FIELD } from "../common";
+import Request from "../core/request";
 
 const THEME = createTheme();
 

@@ -1,7 +1,7 @@
 import { Request, Response, Express } from "express";
 import { Op } from "sequelize";
 import { Transaction } from "sequelize/types";
-import { ApiRoutes, ErrorTexts, FriendsTab, HTTPStatuses } from "../../config/enums";
+import { ApiRoutes, ErrorTexts, FriendsTab, HTTPStatuses } from "../../types/enums";
 import { sequelize } from "../database";
 import ChatsModel from "../database/models/chats";
 import FriendsModel from "../database/models/friends";

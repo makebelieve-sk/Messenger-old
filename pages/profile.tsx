@@ -1,15 +1,15 @@
 import React from "react";
 import { useRouter } from "next/router";
 import { Avatar, Button, Grid, List, ListItem, ListItemAvatar, Paper, Skeleton, Stack } from "@mui/material";
-import { ApiRoutes, FriendsTab, Pages } from "../config/enums";
+import { ApiRoutes, FriendsTab, Pages } from "../types/enums";
 import { useAppDispatch, useAppSelector } from "../hooks/useGlobalState";
 import { selectUserState, setUserDetail } from "../state/user/slice";
 import { selectFriendState, setFriendsCount, setSubscribersCount, setTopFriends } from "../state/friends/slice";
-import CatchErrors from "../axios/catch-errors";
+import CatchErrors from "../core/catch-errors";
 import { IUser, IUserDetails } from "../types/models.types";
 import { MainFriendTabs } from "../components/friends-module/friends-list";
-import Request from "../common/request";
-import { getMonthName, NO_PHOTO } from "../config";
+import Request from "../core/request";
+import { getMonthName, NO_PHOTO } from "../common";
 
 import styles from "../styles/pages/profile.module.scss";
 

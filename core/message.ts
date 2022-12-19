@@ -5,7 +5,7 @@ interface IConstructor extends Omit<IMessage, "id" | "createDate"> {};
 
 // Класс, формируемый сущность "Сообщения"
 export default class Message {
-    constructor ({ userId, chatId, attachments, type, message, isRead }: IConstructor) {
+    constructor ({ userId, chatId, attachments, type, message, isRead, callId }: IConstructor) {
         return {
             id: uuid(),
             userId,
@@ -15,6 +15,7 @@ export default class Message {
             createDate: new Date().toUTCString(),
             message,
             isRead,
+            callId: callId ?? null,
         };
-    }
+    };
 };

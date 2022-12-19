@@ -2,11 +2,11 @@ import React from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import { Avatar, MenuItem, Typography, Menu } from "@mui/material";
-import { ApiRoutes, Pages } from "../../config/enums";
-import CatchErrors from "../../axios/catch-errors";
+import { ApiRoutes, Pages } from "../../types/enums";
+import CatchErrors from "../../core/catch-errors";
 import { selectUserState, setUser } from "../../state/user/slice";
 import { useAppDispatch, useAppSelector } from "../../hooks/useGlobalState";
-import Request from "../../common/request";
+import Request from "../../core/request";
 
 import styles from "./header.module.scss";
 

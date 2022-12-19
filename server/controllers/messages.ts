@@ -1,10 +1,11 @@
 import { Request, Response, Express } from "express";
 import { Op } from "sequelize";
-import { isSingleChat, LIMIT } from "../../config";
-import { ApiRoutes, HTTPStatuses, MessageReadStatus } from "../../config/enums";
+import { isSingleChat, LIMIT } from "../../common";
+import { ApiRoutes, HTTPStatuses, MessageReadStatus } from "../../types/enums";
 import { IDialog } from "../../pages/messages";
-import { IMessage } from "../../types/models.types";
+import { ICall, IMessage } from "../../types/models.types";
 import { sequelize } from "../database";
+import CallsModel from "../database/models/calls";
 import ChatsModel from "../database/models/chats";
 import MessagesModel from "../database/models/messages";
 import UserModel from "../database/models/users";
@@ -126,7 +127,24 @@ class MessagesController {
                 : [];
             const isMore = Boolean(moreMessages && moreMessages.length && moreMessages.length > LIMIT);
 
-            return res.json({ success: true, messages: messages.reverse(), isMore });
+            let messagesWithCall: IMessage[] = [];
+
+            // Дополняем каждый объект сообщения объектов звонка (при наличии)
+            if (messages && messages.length) {
+                for (let message of messages) {
+                    if (message.callId) {
+                        const call = await CallsModel.findByPk(message.callId);
+
+                        if (call) {
+                            (message as any).dataValues.Call = call as ICall;
+                        }
+                    }
+
+                    messagesWithCall.push(message);
+                }
+            }
+
+            return res.json({ success: true, messages: messagesWithCall.reverse(), isMore });
         } catch (error: any) {
             console.log(error);
             return res.status(HTTPStatuses.ServerError).send({ success: false, message: error.message ?? error });
@@ -175,7 +193,7 @@ class MessagesController {
 
     // Читаем сообщение (сообщения)
     // TODO
-    // Посмотреть как сделано прочтение на работе (сообщение в групповом чате - может быть прочитано 1 участником, но не прочитано другим - для него нужно помечать сообщение все еще не прочтенным)
+    // Реализовать прочтение сообщений
     async readMessage(req: Request, res: Response) {
         try {
             const { ids }: { ids: string[] } = req.body;

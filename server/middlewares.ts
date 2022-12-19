@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { HTTPStatuses } from "../config/enums";
+import { HTTPStatuses } from "../types/enums";
 
 // Пользователь должен быть авторизирован в системе
 export function mustAuthenticated(req: Request, res: Response, next: NextFunction) {

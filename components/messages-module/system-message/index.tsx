@@ -1,5 +1,5 @@
 import React from "react";
-import { transformDate } from "../../../config";
+import { transformDate } from "../../../common";
 
 import styles from "./system-message.module.scss";
 

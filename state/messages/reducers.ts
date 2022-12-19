@@ -43,4 +43,7 @@ export default {
     setVisibleUnReadMessages: (state: MessageType, action: PayloadAction<string>) => {
         state.visibleUnReadMessages = action.payload;
     },
+    setWriteMessage: (state: MessageType, action: PayloadAction<boolean>) => {
+        state.isWrite = action.payload;
+    },
 };

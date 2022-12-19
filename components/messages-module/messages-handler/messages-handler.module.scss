@@ -1,0 +1,31 @@
+@import "styles/colors.scss";
+
+.message-type__voice {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+
+    &__call-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-right: 10px;
+    }
+
+    &__info-block {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        width: 100%;
+    }
+
+    &__info-block__title {
+        font-weight: 700;
+    }
+
+    &__info-block__during {
+        color: $light-grey;
+        font-size: 13px;
+    }
+}

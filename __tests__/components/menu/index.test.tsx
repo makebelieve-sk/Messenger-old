@@ -1,7 +1,7 @@
 import singletonRouter from "next/router";
 import { ReactWrapper, ShallowWrapper } from "enzyme";
 import MenuComponent from "../../../components/menu";
-import { Pages, TestMethods } from "../../../config/enums";
+import { Pages, TestMethods } from "../../../types/enums";
 import { setUp } from "../../../jest.setup";
 
 describe("Check MenuComponent render", () => {

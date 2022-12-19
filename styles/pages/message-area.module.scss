@@ -104,15 +104,17 @@
             top: 0;
             .message-area-container--upper-date-block {
                 position: fixed;
-                height: 20px;
+                height: 24px;
                 font-size: 13px;
                 color: $medium-grey;
                 text-align: center;
                 border: 1px solid $very-light-grey;
                 border-radius: 15px;
                 transform: translate(-50%, 0);
-                padding: 0 7px;
+                padding: 2px 7px;
                 z-index: 5;
+                opacity: 1;
+                transition: 0.55s opacity;
             }
             .message-area-container--loading {
                 margin: auto;
@@ -138,6 +140,14 @@
                 left: 50%;
                 transform: translate(-50%, -50%);
             }
+        }
+        .message-area-container--is-write {
+            color: $medium-grey;
+            font-size: 13px;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translate(-50%, 100%);
         }
     }
     .messages--submit-block {

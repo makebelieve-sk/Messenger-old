@@ -1,6 +1,6 @@
 import fs from "fs";
 import { NextRouter } from "next/router";
-import catchErrors from "../../axios/catch-errors";
+import catchErrors from "../../core/catch-errors";
 
 // TODO
 // Перепроверить

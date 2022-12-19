@@ -1,7 +1,7 @@
 import React from "react";
 import { useRouter } from "next/router";
 import { Link, Typography } from "@mui/material";
-import { Pages } from "../../config/enums";
+import { Pages } from "../../types/enums";
 
 export default function Copyright(props: any) {
     const router = useRouter();

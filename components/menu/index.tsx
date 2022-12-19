@@ -4,14 +4,14 @@ import { MenuItem, MenuList, Paper, Stack, Badge } from "@mui/material";
 import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 import MessageOutlinedIcon from "@mui/icons-material/MessageOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
-import { ApiRoutes, FriendsTab, Pages } from "../../config/enums";
+import { ApiRoutes, FriendsTab, Pages } from "../../types/enums";
 import { useAppDispatch, useAppSelector } from "../../hooks/useGlobalState";
 import { selectUserState } from "../../state/user/slice";
 import { selectMainState, setFriendNotification } from "../../state/main/slice";
-import CatchErrors from "../../axios/catch-errors";
+import CatchErrors from "../../core/catch-errors";
 import { IUser } from "../../types/models.types";
 import { MainFriendTabs } from "../friends-module/friends-list";
-import Request from "../../common/request";
+import Request from "../../core/request";
 
 import styles from "./menu.module.scss";
 

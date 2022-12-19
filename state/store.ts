@@ -15,4 +15,8 @@ export default configureStore({
         messages: messagesReducer,
         calls: callsReducer,
     },
+    // Мидлвар для устранения предупреждения при передаче не сериализованных объектов
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware({
+        serializableCheck: false
+    }),
 });

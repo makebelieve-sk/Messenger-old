@@ -1,9 +1,11 @@
+// Методы тестирования
 enum TestMethods {
     mount = "mount",
     shallow = "shallow",
     render = "render"
 };
 
+// API маршруты
 enum ApiRoutes {
     //----auth----------
     signUp = "/sign-up",
@@ -32,8 +34,11 @@ enum ApiRoutes {
     saveMessage = "/save-message",
     readMessage = "/read-message",
     getChatId = "/get-chat-id",
+    //------calls---------
+    endCall = "/end-call",
 };
 
+// Статусы HTTP-запросов
 enum HTTPStatuses {
     PermanentRedirect = 308,
     BadRequest = 400,
@@ -43,6 +48,7 @@ enum HTTPStatuses {
     ServerError = 500,
 };
 
+// URL страницы
 enum Pages {
     profile = "/profile",
     messages = "/messages",
@@ -56,6 +62,7 @@ enum Pages {
     aboutUs = "/about-us",
 };
 
+// Вкладки друзей
 enum FriendsTab {
     all = 0,
     online = 1,
@@ -65,6 +72,7 @@ enum FriendsTab {
     search = 5,
 };
 
+// SOCKET маршруты
 enum SocketActions {
     // ---------------USERS------------------
     GET_ALL_USERS = "GET_ALL_USERS",
@@ -76,29 +84,48 @@ enum SocketActions {
     MESSAGE = "MESSAGE",
     SEND_MESSAGE = "SEND_MESSAGE",
     SET_TEMP_CHAT_ID = "SET_TEMP_CHAT_ID",
+    GET_NEW_MESSAGE_ON_SERVER = "GET_NEW_MESSAGE_ON_SERVER",
+    ADD_NEW_MESSAGE = "ADD_NEW_MESSAGE",
+    NOTIFY_WRITE = "NOTIFY_WRITE",
     // --------------CALLS-------------------
     CALL = "CALL",
     NOTIFY_CALL = "NOTIFY_CALL",
     ACCEPT_CALL = "ACCEPT_CALL",
+    CHANGE_CALL_STATUS = "CHANGE_CALL_STATUS",
+    SET_CALL_STATUS = "SET_CALL_STATUS",
+    END_CALL = "END_CALL",
+    CHANGE_STREAM = "CHANGE_STREAM",
+    CANCEL_CALL = "CANCEL_CALL",
+    ALREADY_IN_CALL = "ALREADY_IN_CALL",
+    NOT_ALREADY_IN_CALL = "NOT_ALREADY_IN_CALL",
+    IS_TALKING = "IS_TALKING",
     // --------------WEBRTC------------------
     ADD_PEER = "ADD_PEER",
     TRANSFER_CANDIDATE = "TRANSFER_CANDIDATE",
     TRANSFER_OFFER = "TRANSFER_OFFER",
     SESSION_DESCRIPTION = "SESSION_DESCRIPTION",
-    GET_CANDIDATE = "GET_CANDIDATE"
+    GET_CANDIDATE = "GET_CANDIDATE",
+    REMOVE_PEER = "REMOVE_PEER",
+    //-----------------SYSTEM---------------
+    SOCKET_CHANNEL_ERROR = "SOCKET_CHANNEL_ERROR",
 };
 
+// Типы сообщений
 enum MessageTypes {
     MESSAGE = 1,
     WITH_FILE = 2,
-    WITH_VOICE = 3,
+    VOICE = 3,
+    CALL = 4,
+    FEW_FILES = 5,
 };
 
+// Типы прочитанных сообщений
 enum MessageReadStatus {
     NOT_READ = 0,
     READ = 1
 };
 
+// Используемые времена
 enum Times {
     TODAY = 1000 * 60 * 60 * 24,
     YESTERDAY = 1000 * 60 * 60 * 24 * 2,
@@ -106,19 +133,17 @@ enum Times {
     YEAR_OR_OLDER = 1000 * 60 * 60 * 24 * 2 * 30,
 };
 
+// Каналы Redis
 enum RedisChannel {
     TEMP_CHAT_ID = "TEMP_CHAT_ID",
 };
 
+// Общие сообщения с ошибкой
 enum ErrorTexts {
     NOT_TEMP_CHAT_ID = "id собеседника не найдено, возможно, это временный чат",
 };
 
-enum CallTypes {
-    AUDIO = "AUDIO",
-    VIDEO = "VIDEO",
-};
-
+// Статусы звонков
 enum CallStatus {
     NOT_CALL = "NOT_CALL",
     SET_CONNECTION = "SET_CONNECTION",
@@ -127,6 +152,32 @@ enum CallStatus {
     ACCEPT = "ACCEPT",
     REJECTED = "REJECTED",
     OFFLINE = "OFFLINE",
+};
+
+// Разновидность звонков
+enum SettingType {
+    VIDEO = "VIDEO",
+    AUDIO = "AUDIO"
+};
+
+// Типы ошибочных каналов сокета
+enum SocketChannelErrorTypes {
+    CALLS = "CALLS",
+};
+
+// Типы звонков
+enum CallTypes {
+    SINGLE = 0,
+    GROUP = 1,
+    SEPARATE = 2,
+};
+
+// Наименования звонков
+enum CallNames {
+    OUTGOING = "Исходящий звонок",
+    INCOMING = "Входящий звонок",
+    GROUP = "Групповой звонок",
+    CANCEL = "Звонок отменён"
 };
 
 export {
@@ -141,6 +192,9 @@ export {
     Times,
     RedisChannel,
     ErrorTexts,
-    CallTypes,
     CallStatus,
+    SettingType,
+    SocketChannelErrorTypes,
+    CallTypes,
+    CallNames,
 };

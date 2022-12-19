@@ -8,18 +8,18 @@ import DoneIcon from "@mui/icons-material/Done";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import { IUser } from "../../types/models.types";
-import { ApiRoutes, FriendsTab, Pages, SocketActions } from "../../config/enums";
-import Request from "../../common/request";
-import CatchErrors from "../../axios/catch-errors";
+import { ApiRoutes, FriendsTab, Pages, SocketActions } from "../../types/enums";
+import Request from "../../core/request";
+import CatchErrors from "../../core/catch-errors";
 import { selectFriendState, setFriends, setPossibleUsers } from "../../state/friends/slice";
 import { selectMainState, setFriendNotification, setFriendTab } from "../../state/main/slice";
 import { selectMessagesState, setTempChat } from "../../state/messages/slice";
 import { useAppDispatch, useAppSelector } from "../../hooks/useGlobalState";
-import { SocketIOClient } from "../app";
-import { NO_PHOTO } from "../../config";
+import { SocketIOClient } from "../socket-io-provider";
+import { NO_PHOTO } from "../../common";
+import { skeletonsPossibleFriends } from "../../pages/friends";
 
 import styles from "./friends.module.scss";
-import { skeletonsPossibleFriends } from "../../pages/friends";
 
 export interface ITempChatId {
     chatId: string;

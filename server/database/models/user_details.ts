@@ -3,9 +3,7 @@ import { sequelize } from "..";
 import { IUserDetails } from "../../../types/models.types";
 
 // Тип модели User, унаследованного от Sequelize
-export type UserDetailsInstance = IUserDetails & Model & {
-  
-};
+export type UserDetailsInstance = IUserDetails & Model & {};
 
 const UserDetailModel = sequelize.define<UserDetailsInstance, IUserDetails>("User_details", {
   id: {

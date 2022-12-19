@@ -1,6 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import { sequelize } from "..";
-import { MessageReadStatus, MessageTypes } from "../../../config/enums";
+import { MessageReadStatus, MessageTypes } from "../../../types/enums";
 import { IMessage } from "../../../types/models.types";
 
 // Тип модели Messages, унаследованного от Sequelize
@@ -45,6 +45,11 @@ const MessagesModel = sequelize.define<MessagesDetailsInstance, IMessage>("Messa
     allowNull: false,
     defaultValue: MessageReadStatus.NOT_READ,
     field: "is_read"
+  },
+  callId: {
+    type: DataTypes.UUIDV4,
+    allowNull: true,
+    field: "call_id"
   }
 });
 

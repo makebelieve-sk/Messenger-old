@@ -1,10 +1,10 @@
 import React from "react";
 
-export default function useStateWithCallback<S, C> (initialState: S): [S, (newState: (prev: S) => S, cb: C) => void] {
+export default function useStateWithCallback<S, C> (initialState: S): [S, (newState: (prev: S) => S, cb?: C) => void] {
     const [state, setState] = React.useState<S>(initialState);
     const cbRef = React.useRef<any | null>(null);
 
-    const updateState = React.useCallback((newState: (prev: S) => S, cb: C) => {
+    const updateState = React.useCallback((newState: (prev: S) => S, cb?: C) => {
         cbRef.current = cb;
 
         setState(prev => typeof newState === "function" ? newState(prev) : newState);

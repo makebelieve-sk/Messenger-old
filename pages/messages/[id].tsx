@@ -11,20 +11,22 @@ import CallOutlinedIcon from "@mui/icons-material/CallOutlined";
 import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
 import EmojiPicker, { EmojiClickData, EmojiStyle } from "emoji-picker-react";
 import { Avatar, Button, CircularProgress, Popover, Skeleton, Tooltip, Typography } from "@mui/material";
-import { SocketIOClient } from "../../components/app";
 import SystemMessage from "../../components/messages-module/system-message";
 import MessagesHandler from "../../components/messages-module/scrolling-messages-block";
 import MessageComponent from "../../components/messages-module";
-import { ApiRoutes, CallStatus, CallTypes, ErrorTexts, MessageReadStatus, MessageTypes, Pages, SocketActions } from "../../config/enums";
+import { ApiRoutes, CallStatus, ErrorTexts, MessageReadStatus, MessageTypes, Pages, SocketActions } from "../../types/enums";
 import { useAppDispatch, useAppSelector } from "../../hooks/useGlobalState";
 import { selectUserState } from "../../state/user/slice";
-import { setModalVisible, setCallingUser, setStatus } from "../../state/calls/slice";
+import { setModalVisible, setStatus, setLocalStream, setChatInfo, setUsers, setCallId } from "../../state/calls/slice";
 import { deleteFromTempChat, selectMessagesState, setCounter, setMessage, setMessages, setVisibleUnReadMessages } from "../../state/messages/slice";
-import CatchErrors from "../../axios/catch-errors";
+import CatchErrors from "../../core/catch-errors";
 import { IMessage } from "../../types/models.types";
-import Request from "../../common/request";
-import { isSingleChat, NO_PHOTO } from "../../config";
-import Message from "../../common/message";
+import Request from "../../core/request";
+import { isSingleChat, NO_PHOTO, rtcSettings } from "../../common";
+import Message from "../../core/message";
+import catchErrors from "../../core/catch-errors";
+import { ICallSettings } from "../../types/redux.types";
+import { SocketIOClient } from "../../components/socket-io-provider";
 
 import styles from "../../styles/pages/message-area.module.scss";
 
@@ -32,6 +34,15 @@ export interface IFriendInfo {
     id: string;
     avatarUrl: string;
     friendName: string;
+};
+
+export interface IChatInfo {
+    chatId: string;
+    initiatorId: string;
+    chatName: string;
+    chatAvatar: string;
+    chatSettings: ICallSettings;
+    isSingle: boolean;
 };
 
 export default function MessageArea() {
@@ -49,12 +60,13 @@ export default function MessageArea() {
     const [visible, setVisible] = React.useState(false);
     const [processedMessages, setProcessedMessages] = React.useState<React.ReactElement[]>([]);
     const [scrollOnDown, setScrollOnDown] = React.useState(false);
-    const [upperDate, setUpperDate] = React.useState<{ text: string; left: number; top: number } | null>(null);
+    const [upperDate, setUpperDate] = React.useState<{ text: string; left: number; top: number; } | null>(null);
+    const [visabilityUpperDate, setVisabilityUpperDate] = React.useState<number>(1);
 
     const socket = React.useContext(SocketIOClient);
     const router = useRouter();
     const dispatch = useAppDispatch();
-    const { messages, counter, visibleUnReadMessages } = useAppSelector(selectMessagesState);
+    const { messages, counter, visibleUnReadMessages, isWrite } = useAppSelector(selectMessagesState);
     const { user } = useAppSelector(selectUserState);
 
     const inputRef = React.useRef<HTMLDivElement>(null);
@@ -63,6 +75,9 @@ export default function MessageArea() {
     const popoverId = Boolean(anchorEl) ? "popover-item-messages-header" : undefined;
     const emojiPopoverId = Boolean(anchorEmoji) ? "emoji-popover" : undefined;
     const popoverCallId = Boolean(anchorCall) ? "call-popover" : undefined;
+
+    let timerIsWrite: NodeJS.Timer | null = null;
+    let timerVisibleUpperDate: NodeJS.Timer | null = null;
 
     // Запоминаем id чата
     React.useEffect(() => {
@@ -192,7 +207,21 @@ export default function MessageArea() {
                 const node = document.elementFromPoint(refCurrentLeft + 11, refCurrentTop + 30);
 
                 if (node && node.id) {
-                    setUpperDate({ text: node.id, left: refCurrentLeft + refCurrentWidth / 2, top: refCurrentTop + 5 });
+                    setUpperDate({
+                        text: node.id,
+                        left: refCurrentLeft + refCurrentWidth / 2,
+                        top: refCurrentTop + 5,
+                    });
+                    setVisabilityUpperDate(1);
+
+                    if (timerVisibleUpperDate) {
+                        clearTimeout(timerVisibleUpperDate);
+                        timerVisibleUpperDate = null;
+                    }
+
+                    timerVisibleUpperDate = setTimeout(() => {
+                        setVisabilityUpperDate(0);
+                    }, 2000);
                 }
                 if (node && node.classList.contains("system-message-container")) {
                     setUpperDate(null);
@@ -340,25 +369,77 @@ export default function MessageArea() {
         }
     };
 
-    // Вызов модального окна для видео-разговора
-    const onVideoCall = () => {
-        if (friendInfo && socket && user) {
-            dispatch(setModalVisible(true));
-            dispatch(setCallingUser(friendInfo));
-            dispatch(setStatus(CallStatus.SET_CONNECTION));
+    // Вызов модального окна для (видео/аудио)-звонка
+    const onCall = (settings: { audio: boolean; video: boolean | { width: number; height: number; }; }) => {
+        if (friendInfo && socket && user && chatId) {
+            // Запись локального потока 2-ух треков (видео/аудио)
+            navigator.mediaDevices.getUserMedia(settings)
+                .then(stream => {
+                    const chatInfo = {
+                        chatId,
+                        initiatorId: user.id,
+                        chatName: friendInfo.friendName,
+                        chatAvatar: friendInfo.avatarUrl,
+                        chatSettings: settings,
+                        isSingle: true
+                    };
+                    const users = [
+                        { id: user.id, friendName: user.firstName + " " + user.thirdName, avatarUrl: user.avatarUrl },
+                        friendInfo
+                    ];
+                    const roomId = uuid();
 
-            // Отправка на сокет
-            socket.emit(SocketActions.CALL, { 
-                roomId: uuid(), 
-                type: CallTypes.VIDEO, 
-                userFrom: user, 
-                users: [friendInfo], 
-                isSingle: true,
-                // TODO
-                // Запоминать в глобальном состоянии имя чата (личное или название беседы)
-                chatName: user.firstName + " " + user.thirdName,
-            });
+                    dispatch(setModalVisible(true));
+                    dispatch(setStatus(CallStatus.SET_CONNECTION));
+                    dispatch(setChatInfo(chatInfo));
+                    dispatch(setUsers(users));
+                    dispatch(setCallId(roomId));
+                    dispatch(setLocalStream(stream));
+
+                    // Отправка на сокет
+                    socket.emit(SocketActions.CALL, { roomId, users, chatInfo });
+
+                    setAnchorCall(null)
+                })
+                .catch(error => catchErrors.catch(error, router, dispatch));
         }
+    };
+
+    // Аудиозвонок
+    const onAudioCall = () => onCall(rtcSettings.audioCall);
+    // Видеозвонок
+    const onVideoCall = () => onCall(rtcSettings.videoCall);
+
+    // Отслеживание моего ввода (уведомляем собеседника о том, что я набираю сообщение)
+    const onInput = () => {
+        if (timerIsWrite) {
+            clearTimeout(timerIsWrite);
+            timerIsWrite = null;
+        }
+
+        if (socket && friendInfo) {
+            socket.emit(SocketActions.NOTIFY_WRITE, { isWrite: true, friendId: friendInfo.id });
+        }
+
+        timerIsWrite = setTimeout(() => {
+            if (socket && friendInfo) {
+                socket.emit(SocketActions.NOTIFY_WRITE, { isWrite: false, friendId: friendInfo.id });
+            }
+        }, 7000);
+    };
+
+    // Показ верхней даты при наведении скролла
+    const onMouseMove = () => {
+        setVisabilityUpperDate(1);
+
+        if (timerVisibleUpperDate) {
+            clearTimeout(timerVisibleUpperDate);
+            timerVisibleUpperDate = null;
+        }
+
+        timerVisibleUpperDate = setTimeout(() => {
+            setVisabilityUpperDate(0);
+        }, 2000);
     };
 
     return <div className={styles["message-area-container"]}>
@@ -378,10 +459,10 @@ export default function MessageArea() {
 
                     <div className={styles["header-container--right-block"]}>
                         <div className={styles["header-container--wrapper"]}>
-                            <CallOutlinedIcon 
-                                className={styles["header-container--header-icon"]} 
-                                aria-describedby={popoverCallId} 
-                                onClick={event => setAnchorCall(event.currentTarget)} 
+                            <CallOutlinedIcon
+                                className={styles["header-container--header-icon"]}
+                                aria-describedby={popoverCallId}
+                                onClick={event => setAnchorCall(event.currentTarget)}
                             />
                             <Popover
                                 id={popoverCallId}
@@ -393,18 +474,18 @@ export default function MessageArea() {
                                     horizontal: "left",
                                 }}
                             >
-                                <Button 
+                                <Button
                                     variant="text"
                                     size="small"
                                     sx={{ padding: "10px 10px 5px 10px", fontSize: 12, display: "flex", alignItems: "center", color: "#000000" }}
-                                    onClick={_ => console.log(111)}
+                                    onClick={onAudioCall}
                                 >
                                     <CallOutlinedIcon fontSize="small" sx={{ marginRight: "10px" }} />Аудиозвонок
                                 </Button>
-                                <Button 
+                                <Button
                                     variant="text"
                                     size="small"
-                                    sx={{ padding: "5px 10px 10px 10px", fontSize: 12, display: "flex", alignItems: "center", color: "#000000" }} 
+                                    sx={{ padding: "5px 10px 10px 10px", fontSize: 12, display: "flex", alignItems: "center", color: "#000000" }}
                                     onClick={onVideoCall}
                                 >
                                     <VideocamOutlinedIcon fontSize="small" sx={{ marginRight: "10px" }} />Видеозвонок
@@ -413,10 +494,10 @@ export default function MessageArea() {
                         </div>
 
                         <div className={styles["header-container--wrapper"]}>
-                            <MoreHorizIcon 
-                                className={styles["header-container--header-icon"]} 
-                                aria-describedby={popoverId} 
-                                onClick={event => setAnchorEl(event.currentTarget)} 
+                            <MoreHorizIcon
+                                className={styles["header-container--header-icon"]}
+                                aria-describedby={popoverId}
+                                onClick={event => setAnchorEl(event.currentTarget)}
                             />
                             <Popover
                                 id={popoverId}
@@ -448,10 +529,13 @@ export default function MessageArea() {
         </div>
 
         {/* Список сообщений */}
-        <div className={styles["message-area-container--messages"]}>
+        <div className={styles["message-area-container--messages"]} onMouseMove={onMouseMove}>
             <div className={styles["message-area-container--messages-scrollable"]} ref={messagesRef} onWheel={onWheel}>
                 {upperDate
-                    ? <div className={styles["message-area-container--upper-date-block"]} style={{ left: upperDate.left, top: upperDate.top }}>
+                    ? <div
+                        className={styles["message-area-container--upper-date-block"]}
+                        style={{ left: upperDate.left, top: upperDate.top, opacity: visabilityUpperDate }}
+                    >
                         {upperDate.text}
                     </div>
                     : null
@@ -482,6 +566,13 @@ export default function MessageArea() {
                         : <div className={styles["message-area-container--no-history"]}>История диалогов пуста</div>
                 }
             </div>
+
+            {isWrite && friendInfo
+                ? <div className={styles["message-area-container--is-write"]}>
+                    {friendInfo.friendName} набирает сообщение...
+                </div>
+                : null
+            }
         </div>
 
         {/* Отправка */}
@@ -524,6 +615,7 @@ export default function MessageArea() {
                     role="textbox"
                     aria-multiline="true"
                     onKeyPress={onKeyPress}
+                    onInput={onInput}
                 />
 
                 <Tooltip title="Прикрепить файл" placement="top">

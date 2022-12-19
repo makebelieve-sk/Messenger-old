@@ -2,7 +2,7 @@ import React from "react";
 import { Grid, Box, Typography, Skeleton } from "@mui/material";
 import { IFormState } from "../../pages/sign-up";
 import Axios from "../../axios";
-import { ApiRoutes } from "../../config/enums";
+import { ApiRoutes } from "../../types/enums";
 
 import styles from "./sign-up.module.scss";
 

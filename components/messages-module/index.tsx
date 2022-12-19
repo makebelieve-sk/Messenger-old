@@ -4,9 +4,10 @@ import { Avatar } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import { IMessage, IUser } from "../../types/models.types";
-import { getHoursOrMinutes, NO_PHOTO, transformDate } from "../../config";
+import { getHoursOrMinutes, NO_PHOTO, transformDate } from "../../common";
 import { IFriendInfo } from "../../pages/messages/[id]";
-import { Pages } from "../../config/enums";
+import { Pages } from "../../types/enums";
+import MessagesHandler from "./messages-handler";
 
 import styles from "./message.module.scss";
 
@@ -17,12 +18,9 @@ interface IWrapperMessage {
     visibleParams: { isFirst: boolean, isLast: boolean };
 };
 
-// TODO
-// Сделать отдельный компонент для контента в сообщении, в котором, в зависимости от типа сообщения, будет соответствующая отрисовка
-
 export default function WrapperMessage({ user, message, friendInfo, visibleParams }: IWrapperMessage) {
     const router = useRouter();
-    
+
     const { isFirst, isLast } = visibleParams;
     const meAuthor = Boolean(message.userId === user.id);
     const authorName = meAuthor ? message.User ? message.User.firstName + " " + message.User.thirdName : "" : friendInfo.friendName;
@@ -42,7 +40,9 @@ export default function WrapperMessage({ user, message, friendInfo, visibleParam
                 : null
             }
 
-            <div className={styles["message-container--message-content"]}>{message.message}</div>
+            <div className={styles["message-container--message-content"]}>
+                <MessagesHandler message={message} userId={user.id} />
+            </div>
 
             <div className={`${!meAuthor ? styles["author--friend-time"] : ""} ${styles["message-container_text-message--time"]}`}>
                 {getHoursOrMinutes(new Date(message.createDate).getHours())}:{getHoursOrMinutes(new Date(message.createDate).getMinutes())}

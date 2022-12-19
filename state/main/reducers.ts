@@ -1,4 +1,5 @@
 import { PayloadAction } from "@reduxjs/toolkit";
+import { ICallData } from "../../types/socket.types";
 import { MainType } from "./slice";
 
 export default {
@@ -17,4 +18,7 @@ export default {
     setGlobalUserLoading: (state: MainType, action: PayloadAction<boolean>) => {
         state.globalUserLoading = action.payload;
     },
+    setGlobalInCall: (state: MainType, action: PayloadAction<null | ICallData>) => {
+        state.globalCall = action.payload;
+    }
 };

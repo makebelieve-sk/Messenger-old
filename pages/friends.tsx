@@ -3,16 +3,16 @@ import { useRouter } from "next/router";
 import { Avatar, Grid, List, ListItem, ListItemAvatar, ListItemText, Paper, Box, Tabs, Tab, Stack, Skeleton, Badge } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import FriendsList, { MainFriendTabs } from "../components/friends-module/friends-list";
-import CatchErrors from "../axios/catch-errors";
-import { ApiRoutes, FriendsTab, SocketActions } from "../config/enums";
+import CatchErrors from "../core/catch-errors";
+import { ApiRoutes, FriendsTab, SocketActions } from "../types/enums";
 import { useAppDispatch, useAppSelector } from "../hooks/useGlobalState";
 import { selectUserState } from "../state/user/slice";
 import { selectFriendState, setFriends, setPossibleUsers } from "../state/friends/slice";
 import { selectMainState, setFriendNotification, setFriendTab } from "../state/main/slice";
 import { IUser } from "../types/models.types";
-import { SocketIOClient } from "../components/app";
-import Request from "../common/request";
-import { NO_PHOTO } from "../config";
+import { SocketIOClient } from "../components/socket-io-provider";
+import Request from "../core/request";
+import { NO_PHOTO } from "../common";
 
 import styles from "../styles/pages/friends.module.scss";
 

@@ -14,12 +14,12 @@ import Copyright from "../components/copyright";
 import { Stepper, Step, StepLabel, Button } from "@mui/material";
 import SignUpForm from "../components/sign-up-module/sign-up-form";
 import ChooseAvatar from "../components/sign-up-module/choose-avatar";
-import Request from "../common/request";
-import { ApiRoutes, Pages } from "../config/enums";
+import Request from "../core/request";
+import { ApiRoutes, Pages } from "../types/enums";
 import { IUser } from "../types/models.types";
 import { useAppDispatch } from "../hooks/useGlobalState";
 import { setUser } from "../state/user/slice";
-import CatchErrors from "../axios/catch-errors";
+import CatchErrors from "../core/catch-errors";
 import { GetServerSideProps } from "next";
 
 const THEME = createTheme();

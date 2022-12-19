@@ -1,6 +1,6 @@
 import { AnyAction, Dispatch, ThunkDispatch } from "@reduxjs/toolkit";
 import { NextRouter } from "next/router";
-import { HTTPStatuses, Pages } from "../config/enums";
+import { HTTPStatuses, Pages } from "../types/enums";
 import { setError } from "../state/error/slice";
 import { RootState } from "../types/redux.types";
 
@@ -76,4 +76,5 @@ class CatchErrors {
     };
 };
 
+// Pattern: Singleton
 export default new CatchErrors();

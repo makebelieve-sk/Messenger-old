@@ -4,7 +4,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import InputMask from "react-input-mask";
 import dynamic from "next/dynamic";
 import { IFormState } from "../../pages/sign-up";
-import { REQUIRED_FIELD } from "../../config";
+import { REQUIRED_FIELD } from "../../common";
 
 const NiceInputPassword = dynamic(() => import("react-nice-input-password"), { ssr: false });
 

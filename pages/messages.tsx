@@ -1,13 +1,13 @@
 import React from "react";
 import { useRouter } from "next/router";
 import { Avatar, CircularProgress, List, ListItem, ListItemAvatar, ListItemText, Paper, Stack, TextField } from "@mui/material";
-import CatchErrors from "../axios/catch-errors";
-import { ApiRoutes, Pages, Times } from "../config/enums";
+import CatchErrors from "../core/catch-errors";
+import { ApiRoutes, Pages, Times } from "../types/enums";
 import { selectUserState } from "../state/user/slice";
 import { useAppDispatch, useAppSelector } from "../hooks/useGlobalState";
 import { selectMessagesState, setDialogs } from "../state/messages/slice";
-import Request from "../common/request";
-import { getHoursOrMinutes, getMonthName, isSingleChat, NO_PHOTO } from "../config";
+import Request from "../core/request";
+import { getHoursOrMinutes, getMonthName, isSingleChat, NO_PHOTO } from "../common";
 import { IUser } from "../types/models.types";
 import { skeletonsPossibleFriends } from "./friends";
 
@@ -96,9 +96,9 @@ export default function Messages() {
                             : "несколько аватарок участников (как в вк 4 штуки)";
 
                         const currentDate = Date.now() - Date.parse(dialog.createDate) > Times.YEAR_OR_OLDER
-                            ? new Date(dialog.createDate).getDay() + getMonthName(new Date(dialog.createDate).getMonth()) + " " + new Date(dialog.createDate).getFullYear()
+                            ? new Date(dialog.createDate).getDate() + getMonthName(new Date(dialog.createDate).getMonth()) + " " + new Date(dialog.createDate).getFullYear()
                             : Date.now() - Date.parse(dialog.createDate) > Times.YESTERDAY && Date.now() - Date.parse(dialog.createDate) < Times.HALF_YEAR
-                                ? new Date(dialog.createDate).getDay() + getMonthName(new Date(dialog.createDate).getMonth())
+                                ? new Date(dialog.createDate).getDate() + getMonthName(new Date(dialog.createDate).getMonth())
                                 : Date.now() - Date.parse(dialog.createDate) > Times.TODAY && Date.now() - Date.parse(dialog.createDate) < Times.YESTERDAY
                                     ? "вчера " + getHoursOrMinutes(new Date(dialog.createDate).getHours()) + ":" + getHoursOrMinutes(new Date(dialog.createDate).getMinutes())
                                     : Date.now() - Date.parse(dialog.createDate) < Times.TODAY
@@ -140,7 +140,7 @@ export default function Messages() {
                                             />
                                             : null
                                         }
-                                        {dialog.message}
+                                        {dialog.message && dialog.message.length > 65 ? dialog.message.slice(0, 65) + "..." : dialog.message}
                                     </div>
                                 }
                                 onClick={goToMessagesArea}

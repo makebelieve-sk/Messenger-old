@@ -3,9 +3,7 @@ import { sequelize } from "..";
 import { IFriend } from "../../../types/models.types";
 
 // Тип модели Friends, унаследованного от Sequelize
-export type FriendsDetailsInstance = IFriend & Model & {
-  
-};
+export type FriendsDetailsInstance = IFriend & Model & {};
 
 const FriendsModel = sequelize.define<FriendsDetailsInstance, IFriend>("Friends", {
   id: {

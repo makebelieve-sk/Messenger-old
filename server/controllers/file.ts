@@ -3,7 +3,7 @@ import { nanoid } from "nanoid";
 // import sharp from "sharp";
 import fs from "fs";
 import { Request, Response, Express } from "express";
-import { ApiRoutes, HTTPStatuses } from "../../config/enums";
+import { ApiRoutes, HTTPStatuses } from "../../types/enums";
 
 // enum FileExtensions {
 //     png = ".png",

@@ -5,7 +5,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import SnackBarComponent from "../snackbar";
 import { useAppDispatch, useAppSelector } from "../../hooks/useGlobalState";
 import { selectErrorState } from "../../state/error/slice";
-import CatchErrors from "../../axios/catch-errors";
+import CatchErrors from "../../core/catch-errors";
 
 import styles from "./modal-with-error.module.scss";
 

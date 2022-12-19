@@ -5,13 +5,13 @@ import { LoadingButton } from "@mui/lab";
 import dayjs from "dayjs";
 import EditTabsModule from "../components/edit-tabs-module";
 import AlertComponent from "../components/alert";
-import { ApiRoutes } from "../config/enums";
+import { ApiRoutes } from "../types/enums";
 import { IUser, IUserDetails } from "../types/models.types";
-import Request from "../common/request";
+import Request from "../core/request";
 import { selectUserState, setUser, setUserDetail } from "../state/user/slice";
 import { useAppDispatch, useAppSelector } from "../hooks/useGlobalState";
-import CatchErrors from "../axios/catch-errors";
-import { REQUIRED_FIELD } from "../config";
+import CatchErrors from "../core/catch-errors";
+import { REQUIRED_FIELD } from "../common";
 
 import styles from "../styles/pages/edit.module.scss";
 
