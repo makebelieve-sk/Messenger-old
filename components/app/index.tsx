@@ -10,6 +10,7 @@ import MenuComponent from "../menu";
 import SnackBarWithCall from "../snackbar-with-call";
 import ModalWithError from "../modal-with-error";
 import ModalWithCall from "../modal-with-call";
+import ModalWithImagesCarousel from "../modal-with-images-carousel";
 import { selectMainState, setGlobalUserLoading } from "../../state/main/slice";
 import { selectErrorState } from "../../state/error/slice";
 import { selectUserState, setUser } from "../../state/user/slice";
@@ -49,6 +50,7 @@ export default function App({ Component, pageProps }) {
 
         <ModalWithError />
         <ModalWithCall />
+        <ModalWithImagesCarousel />
 
         <Component {...pageProps} />
     </>;

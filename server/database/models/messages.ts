@@ -22,7 +22,7 @@ const MessagesModel = sequelize.define<MessagesDetailsInstance, IMessage>("Messa
     allowNull: false,
     field: "chat_id"
   },
-  attachments: {
+  files: {
     type: DataTypes.TEXT,
     allowNull: true,
   },

@@ -1,4 +1,5 @@
 import React from "react";
+import { v4 as uuid } from "uuid";
 import { useRouter } from "next/router";
 import { io, Socket } from "socket.io-client";
 import { SOCKET_IO_CLIENT } from "../../common";
@@ -9,7 +10,7 @@ import { setCallId, setChatInfo, setModalVisible, setStatus, setUsers } from "..
 import { setSystemError } from "../../state/error/slice";
 import { setFriendNotification, setGlobalInCall } from "../../state/main/slice";
 import { setMessage, setTempChat, setWriteMessage } from "../../state/messages/slice";
-import { CallStatus, Pages, SocketActions, SocketChannelErrorTypes } from "../../types/enums";
+import { CallStatus, MessageTypes, Pages, SocketActions, SocketChannelErrorTypes } from "../../types/enums";
 import { IUser } from "../../types/models.types";
 import { ClientToServerEvents, ServerToClientEvents } from "../../types/socket.types";
 
@@ -61,8 +62,6 @@ export default function SocketIOProvider({ user, children }: ISocketIOProvider) 
 
                     // Получаем сообщение от пользователя
                     socketRef.current.on(SocketActions.SEND_MESSAGE, (message) => {
-                        // console.log("===Пришло сообщение=====", message, window.location.pathname);
-
                         if (window.location.pathname.toLowerCase() === Pages.messages + "/" + message.chatId.toLowerCase()) {
                             dispatch(setMessage({ message, isVisibleUnReadMessages: message.id, updateCounter: true }));
                             dispatch(setWriteMessage(false));

@@ -1,0 +1,51 @@
+@import "styles/colors";
+
+.modal-message-with-files {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 380px;
+    box-shadow: 24px;
+    padding: 20px 20px 5px;
+    background: $white;
+    &__title {
+        font-size: 20px;
+        font-weight: 500;
+    }
+    &__files {
+        width: 100%;
+        margin-top: 10px;
+        min-height: 50px;
+        max-height: calc(100vh - 300px);
+        overflow-y: auto;
+    }
+    &__input {
+        width: 100%;
+        position: relative;
+    }
+    &__buttons {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 5px;
+        &__add {
+            padding-left: 0;
+        }
+    }
+    &__buttons-right {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        &__submit {
+            padding-right: 0;
+        }
+    }
+}
+
+.filename-in-snack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+}

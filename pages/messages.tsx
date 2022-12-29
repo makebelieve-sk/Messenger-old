@@ -110,8 +110,8 @@ export default function Messages() {
                             // Если чат - одиночный
                             if (isSingleChat(dialog.id) && dialog.userTo) {
                                 const query = user && user.id === dialog.userFrom.id
-                                    ? { friendId: dialog.userTo.id, friendName: dialog.userTo.firstName + " " + dialog.userTo.thirdName, avatarUrl: dialog.userTo.avatarUrl }
-                                    : { friendId: dialog.userFrom.id, friendName, avatarUrl: dialog.userFrom.avatarUrl };
+                                    ? { friendId: dialog.userTo.id, friendName: dialog.userTo.firstName + " " + dialog.userTo.thirdName, friendAvatarUrl: dialog.userTo.avatarUrl }
+                                    : { friendId: dialog.userFrom.id, friendName, friendAvatarUrl: dialog.userFrom.avatarUrl };
 
                                 router.push({ pathname: Pages.messages + "/" + dialog.id, query }, Pages.messages + "/" + dialog.id);
                             } else {

@@ -6,7 +6,7 @@ import DoneAllIcon from "@mui/icons-material/DoneAll";
 import { IMessage, IUser } from "../../types/models.types";
 import { getHoursOrMinutes, NO_PHOTO, transformDate } from "../../common";
 import { IFriendInfo } from "../../pages/messages/[id]";
-import { Pages } from "../../types/enums";
+import { FileVarieties, MessageTypes, Pages } from "../../types/enums";
 import MessagesHandler from "./messages-handler";
 
 import styles from "./message.module.scss";
@@ -26,6 +26,9 @@ export default function WrapperMessage({ user, message, friendInfo, visibleParam
     const authorName = meAuthor ? message.User ? message.User.firstName + " " + message.User.thirdName : "" : friendInfo.friendName;
     const avatarUrl = meAuthor ? message.User ? message.User.avatarUrl : "" : friendInfo.avatarUrl;
 
+    const isMessageWithImages = Boolean(message.fileExt && message.fileExt === FileVarieties.IMAGES);
+    const isEmptyMessageWithImages = isMessageWithImages && message.type === MessageTypes.FEW_FILES;
+
     const elements = [
         <div
             key={message.id + "textMessage"}
@@ -33,27 +36,32 @@ export default function WrapperMessage({ user, message, friendInfo, visibleParam
                 ? styles["author--friend-message"] + isFirst
                     ? " " + styles["author--friend-message--with-name"]
                     : ""
-                : ""} ${styles["message-container_text-message"]}`}
+                : ""} ${isMessageWithImages ? styles["no-padding"] : ""} ${styles["message-container_text-message"]}`}
         >
+            {/* Имя автора сообщения */}
             {!meAuthor && isFirst
                 ? <a className={styles["author-name"]} href={Pages.profile}>{authorName}</a>
                 : null
             }
 
+            {/* Контент сообщения */}
             <div className={styles["message-container--message-content"]}>
                 <MessagesHandler message={message} userId={user.id} />
             </div>
 
-            <div className={`${!meAuthor ? styles["author--friend-time"] : ""} ${styles["message-container_text-message--time"]}`}>
-                {getHoursOrMinutes(new Date(message.createDate).getHours())}:{getHoursOrMinutes(new Date(message.createDate).getMinutes())}
-            </div>
+            {/* Время отправки и статус прочтенности */}
+            <div className={`${styles["message-container_text-message__bottom-block"]} ${isEmptyMessageWithImages ? styles["dark-background"] : ""}`}>
+                <div className={`${!meAuthor ? styles["message-container_text-message__bottom-block__me-author"] : ""} ${styles["message-container_text-message__bottom-block__time"]}`}>
+                    {getHoursOrMinutes(new Date(message.createDate).getHours())}:{getHoursOrMinutes(new Date(message.createDate).getMinutes())}
+                </div>
 
-            {meAuthor ?
-                message.isRead
-                    ? <DoneAllIcon className={`${styles["message-container_text-message--status"]} ${styles["is-read"]}`} />
-                    : <CheckIcon className={styles["message-container_text-message--status"]} />
-                : null
-            }
+                {meAuthor ?
+                    message.isRead
+                        ? <DoneAllIcon className={styles["is-read"]} fontSize="small" />
+                        : <CheckIcon fontSize="small" />
+                    : null
+                }
+            </div>
         </div>,
         <div key={message.id + "avatar"} className={styles["message-container_user-avatar--block"]}>
             {isLast
@@ -68,9 +76,9 @@ export default function WrapperMessage({ user, message, friendInfo, visibleParam
         </div>
     ];
 
-    return <div 
-        id={message.createDate ? transformDate(message.createDate) : ""} 
-        key={message.id + user.id} 
+    return <div
+        id={message.createDate ? transformDate(message.createDate) : ""}
+        key={message.id + user.id}
         className={styles["message-container"]}
     >
         <div className={`${meAuthor ? styles["author--me"] : styles["author--friend"]} ${styles["message-container--block"]}`}>

@@ -19,7 +19,6 @@
 # misc
 .DS_Store
 *.pem
-/public/avatars/
 
 # debug
 npm-debug.log*
@@ -37,3 +36,7 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# Файлы пользователей
+/public/avatars/
+/public/files/

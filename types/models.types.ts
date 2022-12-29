@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { CallTypes, MessageReadStatus, MessageTypes } from "./enums";
+import { CallTypes, FileVarieties, MessageReadStatus, MessageTypes } from "./enums";
 
 // Интерфейс атрибутов модели Users
 export interface IUser {
@@ -44,12 +44,13 @@ export interface IMessage {
     id: string;
     userId: string;
     chatId: string;
-    attachments?: string[] | null;
+    files?: string[] | File[] | null | string | IFile[];
     type: MessageTypes;
     createDate: string;
     message: string;
     isRead: MessageReadStatus;
-    callId?: string;
+    fileExt?: FileVarieties;
+    callId?: string | null;
     // Модель чата
     Chat?: { id: string; };
     // Модель пользователя (кто отправитель сообщения)
@@ -79,4 +80,12 @@ export interface ICall {
     userIds: string;
     startTime?: string;
     endTime?: string;
+};
+
+// Интерфейс атрибутов модели Files
+export interface IFile {
+    id: string;
+    name: string;
+    size: number;
+    path: string;
 };

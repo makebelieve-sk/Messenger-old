@@ -1,4 +1,5 @@
 import { PayloadAction } from "@reduxjs/toolkit";
+import { IImage } from "../../components/messages-module/image-message";
 import { ICallData } from "../../types/socket.types";
 import { MainType } from "./slice";
 
@@ -20,5 +21,8 @@ export default {
     },
     setGlobalInCall: (state: MainType, action: PayloadAction<null | ICallData>) => {
         state.globalCall = action.payload;
-    }
+    },
+    setImagesInCarousel: (state: MainType, action: PayloadAction<{ images: IImage[], index: number } | null>) => {
+        state.imagesInCarousel = action.payload;
+    },
 };

@@ -1,0 +1,37 @@
+@import "styles/colors";
+
+.messages-container--search-field {
+    outline: none;
+    text-align: left;
+    min-height: 36px;
+    resize: none;
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    line-height: 1.3125;
+    word-wrap: break-word;
+    box-sizing: border-box;
+    transition: border-bottom-color .3s linear;
+    max-width: 615px;
+    border: 1px solid $very-light-grey;
+    border-radius: 6px;
+    padding: 10px 40px;
+    cursor: text;
+    font-size: 13px;
+    font-family: Roboto, Helvetica, Arial, serif;
+    &:empty::before {
+        content: ("Напишите сообщение...");
+        outline: none;
+        color: $placeholder-grey;
+    }
+    &:not(:empty)::before {
+        content: ("");
+    }
+    &:empty:focus::before {
+        outline: none;
+        opacity: 0.7;
+    }
+}
+.is-error {
+    border: 1px solid $red;
+}

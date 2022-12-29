@@ -3,13 +3,14 @@ import { Op } from "sequelize";
 import { isSingleChat, LIMIT } from "../../common";
 import { ApiRoutes, HTTPStatuses, MessageReadStatus } from "../../types/enums";
 import { IDialog } from "../../pages/messages";
-import { ICall, IMessage } from "../../types/models.types";
+import { ICall, IFile, IMessage } from "../../types/models.types";
 import { sequelize } from "../database";
 import CallsModel from "../database/models/calls";
 import ChatsModel from "../database/models/chats";
 import MessagesModel from "../database/models/messages";
 import UserModel from "../database/models/users";
 import { mustAuthenticated } from "../middlewares";
+import FilesModel from "../database/models/files";
 
 class MessagesController {
     // Получить список всех диалогов
@@ -127,9 +128,9 @@ class MessagesController {
                 : [];
             const isMore = Boolean(moreMessages && moreMessages.length && moreMessages.length > LIMIT);
 
-            let messagesWithCall: IMessage[] = [];
+            let messagesWithMixins: IMessage[] = [];
 
-            // Дополняем каждый объект сообщения объектов звонка (при наличии)
+            // Дополняем каждый объект сообщения объектом звонка или файлами (при наличии)
             if (messages && messages.length) {
                 for (let message of messages) {
                     if (message.callId) {
@@ -140,11 +141,26 @@ class MessagesController {
                         }
                     }
 
-                    messagesWithCall.push(message);
+                    if (message.files) {
+                        const filesIds = (message.files as string).split(",");
+                        const files: IFile[] = [];
+
+                        for (let fileId of filesIds) {
+                            const file = await FilesModel.findByPk(fileId);
+
+                            if (file) {
+                                files.push(file);
+                            }
+                        }
+
+                        (message as any).dataValues.files = files;
+                    }
+
+                    messagesWithMixins.push(message);
                 }
             }
 
-            return res.json({ success: true, messages: messagesWithCall.reverse(), isMore });
+            return res.json({ success: true, messages: messagesWithMixins.reverse(), isMore });
         } catch (error: any) {
             console.log(error);
             return res.status(HTTPStatuses.ServerError).send({ success: false, message: error.message ?? error });

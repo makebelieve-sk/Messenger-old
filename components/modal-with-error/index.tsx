@@ -9,8 +9,8 @@ import CatchErrors from "../../core/catch-errors";
 
 import styles from "./modal-with-error.module.scss";
 
-const modalTitle = "modal-modal-title";
-const modalDescription = "modal-modal-description";
+const modalTitle = "modal-error-title";
+const modalDescription = "modal-error-description";
 
 export default function ModalWithError() {
     const [open, setOpen] = React.useState(true);
@@ -51,7 +51,7 @@ export default function ModalWithError() {
                 </Typography>
 
                 <Typography id={modalDescription} sx={{ mt: 2 }}>
-                    Пожалуйста, скопируйте текст ошибки и отправьте ее на почту разработчикам: skryabin.aleksey99@gmail.com
+                    Пожалуйста, скопируйте текст ошибки и отправьте её на почту разработчикам: skryabin.aleksey99@gmail.com
                 </Typography>
 
                 <div className={styles["modal-error-container__error"]} onClick={onCopy}>

@@ -9,6 +9,7 @@ import cookieParser from "cookie-parser";
 import session from "express-session";
 import passport from "passport";
 import connectRedis from "connect-redis";
+import { v4 as uuid } from "uuid";
 
 import { dbConnect, sequelize } from "./database";
 import usePassport from "./passport";
@@ -23,7 +24,6 @@ import MessagesRouter from "./controllers/messages";
 import useRelations from "./database/relations";
 import MessagesModel from "./database/models/messages";
 import CallsModel from "./database/models/calls";
-import Message from "../core/message";
 import { ICall, IMessage } from "../types/models.types";
 import { IChatInfo, IFriendInfo } from "../pages/messages/[id]";
 dotenv.config();
@@ -293,14 +293,16 @@ if (cluster.isPrimary) {
                                 }, { transaction });
 
                                 // Создаем запись звонка в таблице Messages
-                                const newMessage = new Message({
+                                const newMessage = {
+                                    id: uuid(),
                                     userId: initiatorId,
                                     chatId,
                                     type: MessageTypes.CALL,
+                                    createDate: new Date().toUTCString(),
                                     message: "Звонок",
                                     isRead: MessageReadStatus.READ,
                                     callId: roomId
-                                });
+                                };
 
                                 await MessagesModel.create({ ...newMessage }, { transaction });
 

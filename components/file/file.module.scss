@@ -1,0 +1,67 @@
+@use "sass:math";
+@import "styles/colors";
+
+.file {
+    margin-bottom: 5px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    &__main {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        &__icon {
+            border-radius: 50%;
+            height: 40px;
+            width: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+        }
+        .blue {
+            background-color: $blue;
+        }
+        .green {
+            background-color: $green;
+        }
+        &__info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            font-size: 13px;
+            line-height: math.div(22, 13) * 100%;
+            margin-left: 8px;
+            &__name {
+                font-weight: 700;
+            }
+            &__size {
+                padding: 0;
+            }
+        }
+    }
+    &__buttons {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &__change {
+            &:hover {
+                cursor: pointer;
+            }
+            &__icon {
+                transform: rotate(-45deg);
+            }
+        }
+        &__delete {
+            &:hover {
+                cursor: pointer;
+            }
+        }
+    }
+}
+
+.menu-item {
+    font-size: 14px;
+}

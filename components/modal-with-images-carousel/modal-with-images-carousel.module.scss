@@ -1,0 +1,22 @@
+@import "styles/colors";
+
+.modal-carousel-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    box-shadow: 24px;
+    padding: 15px 30px 25px;
+    background: $white;
+}
+.current-image {
+    display: block;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    width: auto;
+    overflow: hidden;
+    margin: 0 auto;
+}

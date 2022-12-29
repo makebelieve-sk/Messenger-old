@@ -17,6 +17,9 @@ enum ApiRoutes {
     getUserDetail = "/get-user-detail",
     //----file-----------
     uploadImage = "/upload-image",
+    saveFiles = "/save-files",
+    openFile = "/open-file",
+    downloadFile = "/download-file",
     //----friends--------
     friends = "/friends",
     getFriends = "/get-friends",
@@ -180,6 +183,12 @@ enum CallNames {
     CANCEL = "Звонок отменён"
 };
 
+// Виды файлов, добавляются в объект сообщения при их обработке
+enum FileVarieties {
+    IMAGES = "IMAGES",
+    FILES = "FILES"
+};
+
 export {
     TestMethods,
     ApiRoutes,
@@ -197,4 +206,5 @@ export {
     SocketChannelErrorTypes,
     CallTypes,
     CallNames,
+    FileVarieties,
 };

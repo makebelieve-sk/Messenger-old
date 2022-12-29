@@ -2,29 +2,25 @@ import React from "react";
 import { useRouter } from "next/router";
 import { v4 as uuid } from "uuid";
 import SendIcon from "@mui/icons-material/Send";
-import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-import SentimentSatisfiedAltIcon from "@mui/icons-material/SentimentSatisfiedAlt";
-import AttachFileOutlinedIcon from "@mui/icons-material/AttachFileOutlined";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import CallOutlinedIcon from "@mui/icons-material/CallOutlined";
-import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
-import EmojiPicker, { EmojiClickData, EmojiStyle } from "emoji-picker-react";
-import { Avatar, Button, CircularProgress, Popover, Skeleton, Tooltip, Typography } from "@mui/material";
+import Tooltip from "@mui/material/Tooltip";
+import CircularProgress from "@mui/material/CircularProgress";
+import { HeaderMessagesArea } from "../../components/messages-module/header";
 import SystemMessage from "../../components/messages-module/system-message";
 import MessagesHandler from "../../components/messages-module/scrolling-messages-block";
 import MessageComponent from "../../components/messages-module";
-import { ApiRoutes, CallStatus, ErrorTexts, MessageReadStatus, MessageTypes, Pages, SocketActions } from "../../types/enums";
+import { UploadFiles } from "../../components/upload-files";
+import { InputComponent } from "../../components/input";
+import { SmilesComponent } from "../../components/smiles";
+import { ApiRoutes, ErrorTexts, MessageReadStatus, MessageTypes, Pages } from "../../types/enums";
 import { useAppDispatch, useAppSelector } from "../../hooks/useGlobalState";
 import { selectUserState } from "../../state/user/slice";
-import { setModalVisible, setStatus, setLocalStream, setChatInfo, setUsers, setCallId } from "../../state/calls/slice";
-import { deleteFromTempChat, selectMessagesState, setCounter, setMessage, setMessages, setVisibleUnReadMessages } from "../../state/messages/slice";
+import { selectMessagesState, setCounter, setMessages, setVisibleUnReadMessages } from "../../state/messages/slice";
 import CatchErrors from "../../core/catch-errors";
 import { IMessage } from "../../types/models.types";
 import Request from "../../core/request";
-import { isSingleChat, NO_PHOTO, rtcSettings } from "../../common";
+import { handlingMessagesWithFiles, isSingleChat } from "../../common";
 import Message from "../../core/message";
-import catchErrors from "../../core/catch-errors";
 import { ICallSettings } from "../../types/redux.types";
 import { SocketIOClient } from "../../components/socket-io-provider";
 
@@ -46,13 +42,10 @@ export interface IChatInfo {
 };
 
 export default function MessageArea() {
-    const [error, setError] = React.useState("");
     const [loading, setLoading] = React.useState(false);
+    const [loadingSend, setLoadingSend] = React.useState(false);
     const [loadingFriendInfo, setLoadingFriendInfo] = React.useState(false);
-    const [anchorEl, setAnchorEl] = React.useState<HTMLOrSVGElement | null | any>(null);
     const [friendInfo, setFriendInfo] = React.useState<IFriendInfo | null>(null);
-    const [anchorEmoji, setAnchorEmoji] = React.useState<SVGSVGElement | null>(null);
-    const [anchorCall, setAnchorCall] = React.useState<HTMLOrSVGElement | null | any>(null);
     const [page, setPage] = React.useState(0);
     const [isMore, setIsMore] = React.useState(false);
     const [beforeHeight, setBeforeHeight] = React.useState<number>();
@@ -61,22 +54,19 @@ export default function MessageArea() {
     const [processedMessages, setProcessedMessages] = React.useState<React.ReactElement[]>([]);
     const [scrollOnDown, setScrollOnDown] = React.useState(false);
     const [upperDate, setUpperDate] = React.useState<{ text: string; left: number; top: number; } | null>(null);
-    const [visabilityUpperDate, setVisabilityUpperDate] = React.useState<number>(1);
+    const [visabilityUpperDate, setVisabilityUpperDate] = React.useState(1);
 
     const socket = React.useContext(SocketIOClient);
+
     const router = useRouter();
     const dispatch = useAppDispatch();
+
     const { messages, counter, visibleUnReadMessages, isWrite } = useAppSelector(selectMessagesState);
     const { user } = useAppSelector(selectUserState);
 
     const inputRef = React.useRef<HTMLDivElement>(null);
     const messagesRef = React.useRef<HTMLDivElement>(null);
 
-    const popoverId = Boolean(anchorEl) ? "popover-item-messages-header" : undefined;
-    const emojiPopoverId = Boolean(anchorEmoji) ? "emoji-popover" : undefined;
-    const popoverCallId = Boolean(anchorCall) ? "call-popover" : undefined;
-
-    let timerIsWrite: NodeJS.Timer | null = null;
     let timerVisibleUpperDate: NodeJS.Timer | null = null;
 
     // Запоминаем id чата
@@ -121,6 +111,7 @@ export default function MessageArea() {
     React.useEffect(() => {
         if (user && friendInfo) {
             dispatch(setMessages([]));
+
             Request.post(ApiRoutes.getMessages, { chatId, page }, setLoading,
                 (data: { success: boolean, messages: IMessage[], isMore: boolean }) => {
                     dispatch(setMessages(data.messages));
@@ -135,15 +126,18 @@ export default function MessageArea() {
     React.useEffect(() => {
         if (messages && messages.length) {
             if (user && friendInfo) {
-                const procMessages = messages.reduce((acc, message, index) => {
+                // Обрабатываем сообщения с файлами
+                const handlingMessages = handlingMessagesWithFiles(messages);
+
+                const procMessages = handlingMessages.reduce((acc, message, index) => {
                     const visibleParams = checkIsFirstOrLast(
                         message,
-                        index - 1 >= 0 ? messages[index - 1] : null,
-                        index + 1 <= messages.length ? messages[index + 1] : null
+                        index - 1 >= 0 ? handlingMessages[index - 1] : null,
+                        index + 1 <= handlingMessages.length ? handlingMessages[index + 1] : null
                     );
 
                     // Проверка на создание системного сообщения "Дата"
-                    if (index === 0 || (index - 1 >= 0 && getDate(messages[index - 1].createDate) !== getDate(message.createDate))) {
+                    if (index === 0 || (index - 1 >= 0 && getDate(handlingMessages[index - 1].createDate) !== getDate(message.createDate))) {
                         acc.push(<SystemMessage key={uuid()} date={message.createDate} />);
                     }
 
@@ -167,6 +161,13 @@ export default function MessageArea() {
             }
         }
     }, [messages]);
+
+    // Если пришло новое сообщение и у нас не было скролла (до счетчика непрочитанных) - то мы скроллим в низ, чтобы показать эти новые сообщения
+    React.useEffect(() => {
+        if (processedMessages && processedMessages.length && !visible) {
+            onScrollDown();
+        }
+    }, [processedMessages]);
 
     // Обнуляем счетчик непрочитанных сообщений в якоре
     React.useEffect(() => {
@@ -235,9 +236,7 @@ export default function MessageArea() {
             messagesRef.current?.removeEventListener("scroll", scrollHandler);
             dispatch(setCounter(0));
             dispatch(setVisibleUnReadMessages(""));
-            setAnchorEl(null);
-            setAnchorEmoji(null);
-            setAnchorCall(null);
+            timerVisibleUpperDate = null;
         }
     }, []);
 
@@ -267,8 +266,9 @@ export default function MessageArea() {
     };
 
     // Скролл до самого низа
-    const onScrollDown = () => {
+    const onScrollDown = (isSmoothScroll = false) => {
         if (messagesRef.current) {
+            messagesRef.current.style.scrollBehavior = isSmoothScroll ? "smooth" : "auto";
             messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
 
             if (counter) {
@@ -278,67 +278,98 @@ export default function MessageArea() {
     };
 
     // Обработка клика на кнопку
-    const onSubmit = () => {
+    const onSubmit = (messageProps: { type: MessageTypes, files?: File[] } | null = null) => {
         if (!user) {
-            setError("Возникла ошибка, пожалуйста обновите страницу");
             CatchErrors.catch("Ошибка в подгрузке Вашего уникального идентификатора, пожалуйста обновите страницу", router, dispatch);
         }
 
         if (!chatId) {
-            setError("Возникла ошибка, пожалуйста обновите страницу");
             CatchErrors.catch("Ошибка в подгрузке уникального идентификатора чата, пожалуйста обновите страницу", router, dispatch);
         }
 
-        if (inputRef.current && inputRef.current.textContent && socket && user && chatId && friendInfo) {
-            const preparedValue = inputRef.current.textContent.replace(/\`\'/g, "\"");
-
-            // Объект сообщения
-            const message = new Message({
-                userId: user.id,
-                chatId,
-                type: MessageTypes.MESSAGE,
-                message: preparedValue,
-                isRead: MessageReadStatus.NOT_READ
-            }) as IMessage;
+        if (((inputRef.current && inputRef.current.textContent) || (messageProps && messageProps.files)) &&
+            inputRef.current && socket && user && chatId && friendInfo
+        ) {
+            const preparedValue = inputRef.current.textContent
+                ? inputRef.current.textContent.replace(/\`\'/g, "\"")
+                : "";
 
             // Очищаем инпут и ставим на него фокус
             inputRef.current.textContent = "";
             inputRef.current.focus();
 
-            // Добавляем сообщение в массив сообщений для отрисовки
-            dispatch(setMessage({ message }));
-
-            // Обнуляем глобальный флаг "Непрочитанный сообщения"
+            // Обнуляем глобальный флаг "Непрочитанные сообщения"
             dispatch(setVisibleUnReadMessages(""));
 
-            // Отправка на сокет
-            socket.emit(SocketActions.MESSAGE, { data: message, friendId: friendInfo.id });
+            // Тип сообщения
+            const type = messageProps && messageProps.type ? messageProps.type : MessageTypes.MESSAGE;
+            // Состояние сообщения без прикрепленных файлов и голосовых сообщений
+            const initialMessage = {
+                userId: user.id,
+                chatId,
+                type,
+                message: preparedValue,
+                isRead: MessageReadStatus.NOT_READ
+            } as IMessage;
 
-            // Сохраняем сообщение в бд
-            Request.post(
-                ApiRoutes.saveMessage,
-                { message, isSingleChat: isSingleChat(chatId), userTo: friendInfo.id },
-                () => dispatch(deleteFromTempChat(chatId)),
-                undefined,
-                (error: any) => CatchErrors.catch(error, router, dispatch)
-            );
+            switch (type) {
+                case MessageTypes.MESSAGE: {
+                    // Объект сообщения
+                    const messageInstance = new Message({
+                        newMessage: initialMessage,
+                        friendInfo,
+                        router,
+                        socket,
+                        dispatch
+                    });
+
+                    // Добавляем текстовое сообщение в массив сообщений для отрисовки
+                    messageInstance.addMessageToStore();
+
+                    // Отправка на сокет
+                    messageInstance.sendBySocket();
+
+                    // Сохраняем сообщение в таблицу Messages
+                    messageInstance.saveInMessages();
+                    break;
+                }
+
+                case MessageTypes.WITH_FILE:
+                case MessageTypes.FEW_FILES: {
+                    if (messageProps && messageProps.files) {
+                        // Объект сообщения
+                        const messageInstance = new Message({
+                            newMessage: {
+                                ...initialMessage,
+                                files: messageProps.files
+                            },
+                            friendInfo,
+                            router,
+                            socket,
+                            dispatch
+                        });
+
+                        // Сохраняем файлы в файловой системе и в таблице Files
+                        messageInstance.saveInFiles(messageProps.files, setLoadingSend);
+                    }
+
+                    break;
+                }
+
+                default:
+                    break;
+            }
         }
     };
 
-    // Обработка нажатия на Enter или Shift + Enter
-    const onKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        if (event.key === "Enter") {
-            if (event.shiftKey) return;
+    // Обновляем значение в текстовом поле
+    const setCurrentValueRef = (newValue: string, cb?: (oldValue: string) => void) => {
+        if (inputRef.current) {
+            if (cb) {
+                cb(inputRef.current.textContent ?? "");
+            }
 
-            event.preventDefault();
-            onSubmit();
-        }
-    };
-
-    // Добавление эмодзи в текстовое сообщение
-    const onEmojiClick = (emoji: EmojiClickData) => {
-        if (emoji && inputRef.current) {
-            inputRef.current.textContent += emoji.emoji;
+            inputRef.current.textContent = newValue;
         }
     };
 
@@ -369,168 +400,18 @@ export default function MessageArea() {
         }
     };
 
-    // Вызов модального окна для (видео/аудио)-звонка
-    const onCall = (settings: { audio: boolean; video: boolean | { width: number; height: number; }; }) => {
-        if (friendInfo && socket && user && chatId) {
-            // Запись локального потока 2-ух треков (видео/аудио)
-            navigator.mediaDevices.getUserMedia(settings)
-                .then(stream => {
-                    const chatInfo = {
-                        chatId,
-                        initiatorId: user.id,
-                        chatName: friendInfo.friendName,
-                        chatAvatar: friendInfo.avatarUrl,
-                        chatSettings: settings,
-                        isSingle: true
-                    };
-                    const users = [
-                        { id: user.id, friendName: user.firstName + " " + user.thirdName, avatarUrl: user.avatarUrl },
-                        friendInfo
-                    ];
-                    const roomId = uuid();
-
-                    dispatch(setModalVisible(true));
-                    dispatch(setStatus(CallStatus.SET_CONNECTION));
-                    dispatch(setChatInfo(chatInfo));
-                    dispatch(setUsers(users));
-                    dispatch(setCallId(roomId));
-                    dispatch(setLocalStream(stream));
-
-                    // Отправка на сокет
-                    socket.emit(SocketActions.CALL, { roomId, users, chatInfo });
-
-                    setAnchorCall(null)
-                })
-                .catch(error => catchErrors.catch(error, router, dispatch));
-        }
-    };
-
-    // Аудиозвонок
-    const onAudioCall = () => onCall(rtcSettings.audioCall);
-    // Видеозвонок
-    const onVideoCall = () => onCall(rtcSettings.videoCall);
-
-    // Отслеживание моего ввода (уведомляем собеседника о том, что я набираю сообщение)
-    const onInput = () => {
-        if (timerIsWrite) {
-            clearTimeout(timerIsWrite);
-            timerIsWrite = null;
-        }
-
-        if (socket && friendInfo) {
-            socket.emit(SocketActions.NOTIFY_WRITE, { isWrite: true, friendId: friendInfo.id });
-        }
-
-        timerIsWrite = setTimeout(() => {
-            if (socket && friendInfo) {
-                socket.emit(SocketActions.NOTIFY_WRITE, { isWrite: false, friendId: friendInfo.id });
-            }
-        }, 7000);
-    };
-
-    // Показ верхней даты при наведении скролла
-    const onMouseMove = () => {
-        setVisabilityUpperDate(1);
-
-        if (timerVisibleUpperDate) {
-            clearTimeout(timerVisibleUpperDate);
-            timerVisibleUpperDate = null;
-        }
-
-        timerVisibleUpperDate = setTimeout(() => {
-            setVisabilityUpperDate(0);
-        }, 2000);
-    };
-
     return <div className={styles["message-area-container"]}>
         {/* Header */}
-        <div className={styles["message-area-container--header"]}>
-            {friendInfo && !loadingFriendInfo
-                ? <>
-                    <div className={styles["header-container--back"]} onClick={_ => router.push(Pages.messages)}>
-                        <ArrowBackIosNewIcon className={styles["header-container--back--icon"]} />
-                        <div>Назад</div>
-                    </div>
-
-                    <div className={styles["header-container--central-block"]}>
-                        <div className={styles["header-container--name"]}>{friendInfo.friendName}</div>
-                        <div className={styles["header-container--status"]}>была в сети 50 минут назад</div>
-                    </div>
-
-                    <div className={styles["header-container--right-block"]}>
-                        <div className={styles["header-container--wrapper"]}>
-                            <CallOutlinedIcon
-                                className={styles["header-container--header-icon"]}
-                                aria-describedby={popoverCallId}
-                                onClick={event => setAnchorCall(event.currentTarget)}
-                            />
-                            <Popover
-                                id={popoverCallId}
-                                open={Boolean(anchorCall)}
-                                anchorEl={anchorCall}
-                                onClose={() => setAnchorCall(null)}
-                                anchorOrigin={{
-                                    vertical: "bottom",
-                                    horizontal: "left",
-                                }}
-                            >
-                                <Button
-                                    variant="text"
-                                    size="small"
-                                    sx={{ padding: "10px 10px 5px 10px", fontSize: 12, display: "flex", alignItems: "center", color: "#000000" }}
-                                    onClick={onAudioCall}
-                                >
-                                    <CallOutlinedIcon fontSize="small" sx={{ marginRight: "10px" }} />Аудиозвонок
-                                </Button>
-                                <Button
-                                    variant="text"
-                                    size="small"
-                                    sx={{ padding: "5px 10px 10px 10px", fontSize: 12, display: "flex", alignItems: "center", color: "#000000" }}
-                                    onClick={onVideoCall}
-                                >
-                                    <VideocamOutlinedIcon fontSize="small" sx={{ marginRight: "10px" }} />Видеозвонок
-                                </Button>
-                            </Popover>
-                        </div>
-
-                        <div className={styles["header-container--wrapper"]}>
-                            <MoreHorizIcon
-                                className={styles["header-container--header-icon"]}
-                                aria-describedby={popoverId}
-                                onClick={event => setAnchorEl(event.currentTarget)}
-                            />
-                            <Popover
-                                id={popoverId}
-                                open={Boolean(anchorEl)}
-                                anchorEl={anchorEl}
-                                onClose={() => setAnchorEl(null)}
-                                anchorOrigin={{
-                                    vertical: "bottom",
-                                    horizontal: "left",
-                                }}
-                            >
-                                <Typography sx={{ p: 2, cursor: "pointer", fontSize: 14 }} onClick={_ => console.log(111)}>
-                                    Показать вложения
-                                </Typography>
-                            </Popover>
-                        </div>
-
-                        <div className={styles["header-container--wrapper"]}>
-                            <Avatar
-                                alt={friendInfo.friendName}
-                                src={friendInfo.avatarUrl ? friendInfo.avatarUrl : NO_PHOTO}
-                                className={styles["header-container--right-block--avatar"]}
-                            />
-                        </div>
-                    </div>
-                </>
-                : <Skeleton variant="text" className={styles["header-container--friend-name-loading"]} />
-            }
-        </div>
+        <HeaderMessagesArea 
+            friendInfo={friendInfo}
+            loadingFriendInfo={loadingFriendInfo}
+            chatId={chatId}
+        />
 
         {/* Список сообщений */}
-        <div className={styles["message-area-container--messages"]} onMouseMove={onMouseMove}>
+        <div className={styles["message-area-container--messages"]}>
             <div className={styles["message-area-container--messages-scrollable"]} ref={messagesRef} onWheel={onWheel}>
+                {/* Показ даты текущего сообщения при скролле */}
                 {upperDate
                     ? <div
                         className={styles["message-area-container--upper-date-block"]}
@@ -547,7 +428,7 @@ export default function MessageArea() {
                         ? <div className={styles["message-area-container--messages-wrapper"]}>
                             {isMore
                                 ? <div id="loading-more-messages" className={styles["message-area-container--loading-is-more"]}>
-                                    <CircularProgress />
+                                    <CircularProgress size={30} />
                                 </div>
                                 : null
                             }
@@ -577,8 +458,9 @@ export default function MessageArea() {
 
         {/* Отправка */}
         <form noValidate autoComplete="off" className={styles["messages--submit-block"]}>
+            {/* Якорь вниз + счётчик только что пришедших сообщений */}
             {visible
-                ? <div className={styles["message-area-container--anchor"]} onClick={onScrollDown}>
+                ? <div className={styles["message-area-container--anchor"]} onClick={_ => onScrollDown(true)}>
                     {counter
                         ? <span className={styles["message-area-container--anchor-counter"]}>{counter}</span>
                         : null
@@ -589,43 +471,32 @@ export default function MessageArea() {
             }
 
             <div className={styles["messages-container--search-field-wrapper"]}>
-                <Tooltip title="Выбор смайлика" placement="top">
-                    <SentimentSatisfiedAltIcon
-                        sx={{ cursor: "pointer" }}
-                        aria-describedby={popoverId}
-                        className={`${styles["messages-container--search-field-icon"]} ${styles["smiles"]}`}
-                        onClick={event => setAnchorEmoji(event.currentTarget)}
-                    />
-                </Tooltip>
-                <Popover
-                    id={emojiPopoverId}
-                    sx={{ position: "absolute", top: -50, left: 20 }}
-                    open={Boolean(anchorEmoji)}
-                    anchorEl={anchorEmoji}
-                    onClose={() => setAnchorEmoji(null)}
-                >
-                    <EmojiPicker emojiStyle={EmojiStyle.GOOGLE} onEmojiClick={onEmojiClick} lazyLoadEmojis={true} searchPlaceHolder="Поиск..." />
-                </Popover>
+                {/* Выбор смайлика */}
+                <SmilesComponent ref={inputRef} />
 
-                <div
+                {/* Текстовое поле для отправки сообщения */}
+                <InputComponent
                     ref={inputRef}
-                    id="submit-input"
-                    className={`${styles["messages-container--search-field"]} ${error ? styles["is-error"] : ""}`}
-                    contentEditable="true"
-                    role="textbox"
-                    aria-multiline="true"
-                    onKeyPress={onKeyPress}
-                    onInput={onInput}
+                    friendInfo={friendInfo}
+                    onSubmit={onSubmit}
                 />
 
-                <Tooltip title="Прикрепить файл" placement="top">
-                    <AttachFileOutlinedIcon className={`${styles["messages-container--search-field-icon"]} ${styles["attach-file"]}`} />
-                </Tooltip>
-                {error ? <div className={styles["messages-container--error-text"]}>{error}</div> : null}
+                {/* Прикрепление файлов + модальное окно с файлами */}
+                <UploadFiles
+                    className={`${styles["messages-container--search-field-icon"]} ${styles["attach-file"]}`}
+                    friendInfo={friendInfo}
+                    onSubmit={onSubmit}
+                    setCurrentValueRef={setCurrentValueRef}
+                />
             </div>
 
             <Tooltip title="Отправить сообщение" placement="top">
-                <div className={styles["messages-container--search-icon"]} onClick={onSubmit}><SendIcon /></div>
+                <div className={styles["messages-container--search-icon"]} onClick={_ => onSubmit()}>
+                    {loadingSend
+                        ? <CircularProgress size={30} />
+                        : <SendIcon />
+                    }
+                </div>
             </Tooltip>
         </form>
     </div>

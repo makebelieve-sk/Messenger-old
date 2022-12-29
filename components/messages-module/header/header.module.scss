@@ -1,0 +1,74 @@
+@import "styles/colors";
+
+.message-area-container--header {
+    padding-right: 10px;
+    height: 50px;
+    border-bottom: 1px solid $very-light-grey;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    align-items: center;
+    .header-container--back {
+        padding-left: 10px;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        height: 100%;
+        width: 33%;
+        color: $placeholder-grey;
+        &:hover {
+            background: linear-gradient(to right, rgba(174, 183, 194, 0.12) 50%, transparent);
+            cursor: pointer;
+        }
+        .header-container--back--icon {
+            height: 20px;
+            width: 20px;
+            stroke: $placeholder-grey;
+            stroke-width: 0.4;
+        }
+        div {
+            font-size: 14px;
+        }
+    }
+    .header-container--central-block {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 33%;
+        .header-container--name {
+            font-size: 14px;
+        }
+        .header-container--status {
+            font-size: 12px;
+            color: $placeholder-grey;
+        }
+    }
+    .header-container--right-block {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        width: 33%;
+        .header-container--wrapper {
+            margin-right: 10px;
+            &:last-child {
+                margin-right: 0;
+            }
+        }
+        .header-container--header-icon {
+            &:hover {
+                cursor: pointer;
+            }
+        }
+        .header-container--right-block--avatar {
+            width: 35px;
+            height: 35px;
+            &:hover {
+                cursor: pointer;
+            }
+        }
+    }
+    .header-container--friend-name-loading {
+        width: 100px;
+    }
+}

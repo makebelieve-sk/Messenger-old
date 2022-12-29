@@ -1,8 +1,11 @@
 import React from "react";
 import { Grid, Box, Typography, Skeleton } from "@mui/material";
 import { IFormState } from "../../pages/sign-up";
-import Axios from "../../axios";
 import { ApiRoutes } from "../../types/enums";
+import Request from "../../core/request";
+import { useRouter } from "next/router";
+import { useAppDispatch } from "../../hooks/useGlobalState";
+import CatchErrors from "../../core/catch-errors";
 
 import styles from "./sign-up.module.scss";
 
@@ -16,6 +19,9 @@ export default function ChooseAvatar({ username, formValues, onChange }: IChoose
     const [avatarUrl, setAvatarUrl] = React.useState<string>(formValues.values.avatarUrl);
     const [loading, setLoading] = React.useState(false);
 
+    const router = useRouter();
+    const dispatch = useAppDispatch();
+
     const inputFileRef = React.useRef<HTMLInputElement>(null);
     const avatarLetters = username.split(" ").map(str => str[0]).join("");
 
@@ -26,25 +32,24 @@ export default function ChooseAvatar({ username, formValues, onChange }: IChoose
 
     // Сжатие аватарки на сервере
     const uploadImage = async (file: File): Promise<any> => {
-        try {
-            setLoading(true);
-            const formData = new FormData();    // Создаем объект FormData
-            formData.append("avatar", file);    // Добавляем файл в объект formData (на сервере будет req.file, где мидлвар FileController.uploader.single("avatar"))
-    
-            // Получаем ответ от сервера
-            const result = await Axios.post(ApiRoutes.uploadImage, formData, { headers: { "Content-Type": "multipart/form-data" } });
-            
-            if (result && result.data && result.data.success) {
-                return result.data;
-            } else {
-                return null;
-            }
-        } catch (error: any) {
-            console.error(error);
-            throw new Error(error);
-        } finally {
-            setLoading(false);
-        }
+        const formData = new FormData();    // Создаем объект FormData
+        formData.append("avatar", file);    // Добавляем файл в объект formData (на сервере будет req.file, где мидлвар FileController.uploader.single("avatar"))
+
+        // Получаем ответ от сервера
+        return Request.post(
+            ApiRoutes.uploadImage,
+            formData,
+            setLoading,
+            (result) => {
+                if (result && result.data && result.data.success) {
+                    return result.data;
+                } else {
+                    return null;
+                }
+            },
+            (error: any) => CatchErrors.catch(error, router, dispatch),
+            { headers: { "Content-Type": "multipart/form-data" } }
+        );
     };
 
     // Функция изменения аватарки

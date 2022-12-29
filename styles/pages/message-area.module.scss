@@ -13,87 +13,13 @@
     background: $white;
     border-radius: 5px;
     position: relative;
-    .message-area-container--header {
-        padding-right: 10px;
-        height: 50px;
-        border-bottom: 1px solid $very-light-grey;
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
-        align-items: center;
-        .header-container--back {
-            padding-left: 10px;
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            height: 100%;
-            width: 33%;
-            color: $placeholder-grey;
-            &:hover {
-                background: linear-gradient(to right, rgba(174, 183, 194, 0.12) 50%, transparent);
-                cursor: pointer;
-            }
-            .header-container--back--icon {
-                height: 20px;
-                width: 20px;
-                stroke: $placeholder-grey;
-                stroke-width: 0.4;
-            }
-            div {
-                font-size: 14px;
-            }
-        }
-        .header-container--central-block {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            width: 33%;
-            .header-container--name {
-                font-size: 14px;
-            }
-            .header-container--status {
-                font-size: 12px;
-                color: $placeholder-grey;
-            }
-        }
-        .header-container--right-block {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            width: 33%;
-            .header-container--wrapper {
-                margin-right: 10px;
-                &:last-child {
-                    margin-right: 0;
-                }
-            }
-            .header-container--header-icon {
-                &:hover {
-                    cursor: pointer;
-                }
-            }
-            .header-container--right-block--avatar {
-                width: 35px;
-                height: 35px;
-                &:hover {
-                    cursor: pointer;
-                }
-            }
-        }
-        .header-container--friend-name-loading {
-            width: 100px;
-        }
-    }
     .message-area-container--messages {
-        padding: 20px;
         width: 100%;
         flex: 1 1 auto;
         position: relative;
         margin-bottom: 25px;
         .message-area-container--messages-scrollable {
             overflow-y: overlay;
-            scroll-behavior: smooth;
             display: block;
             height: auto;
             max-height: 100%;
@@ -106,7 +32,7 @@
                 position: fixed;
                 height: 24px;
                 font-size: 13px;
-                color: $medium-grey;
+                color: $dark;
                 text-align: center;
                 border: 1px solid $very-light-grey;
                 border-radius: 15px;
@@ -115,6 +41,7 @@
                 z-index: 5;
                 opacity: 1;
                 transition: 0.55s opacity;
+                background-color: $very-light-grey;
             }
             .message-area-container--loading {
                 margin: auto;
@@ -210,61 +137,21 @@
                     opacity: 1;
                 }
             }
-            .smiles {
-                left: 8px;
-            }
             .attach-file {
                 right: 8px;
                 transform: rotate(45deg);
             }
-            .messages-container--search-field {
-                outline: none;
-                text-align: left;
-                min-height: 36px;
-                resize: none;
-                max-height: 200px;
-                overflow-y: auto;
-                overflow-x: hidden;
-                line-height: 1.3125;
-                word-wrap: break-word;
-                box-sizing: border-box;
-                transition: border-bottom-color .3s linear;
-                width: 615px;
-                border: 1px solid $very-light-grey;
-                border-radius: 6px;
-                padding: 10px 40px;
-                cursor: text;
-                font-size: 13px;
-                font-family: Roboto, Helvetica, Arial, serif;
-                &:empty::before {
-                    content: ("Напишите сообщение...");
-                    outline: none;
-                    color: $placeholder-grey;
-                }
-                &:not(:empty)::before {
-                    content: ("");
-                }
-                &:empty:focus::before {
-                    outline: none;
-                    opacity: 0.7;
-                }
-            }
-            .is-error {
-                border: 1px solid $red;
-            }
-            .messages-container--error-text {
-                font-size: 10px;
-                color: $red;
-                position: absolute;
-                bottom: 1px;
-                left: 40px;
-            }
         }
         .messages-container--search-icon {
+            display: flex;
+            justify-content: center;
+            align-items: center;
             width: 5%;
             text-align: center;
             opacity: 0.5;
-            cursor: pointer;
+            &:hover {
+                cursor: pointer;
+            }
         }
     }
 }

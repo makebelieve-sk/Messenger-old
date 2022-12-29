@@ -3,10 +3,12 @@ import { useRouter } from "next/router";
 import PhoneCallbackOutlinedIcon from "@mui/icons-material/PhoneCallbackOutlined";
 import PhoneForwardedOutlinedIcon from "@mui/icons-material/PhoneForwardedOutlined";
 import catchErrors from "../../../core/catch-errors";
-import { CallNames, MessageTypes } from "../../../types/enums";
+import { CallNames, FileVarieties, MessageTypes } from "../../../types/enums";
 import { useAppDispatch } from "../../../hooks/useGlobalState";
-import { IMessage } from "../../../types/models.types";
+import { IFile, IMessage } from "../../../types/models.types";
 import { getHoursOrMinutes } from "../../../common";
+import FileComponent from "../../file";
+import { ImageMessage, IImage } from "../image-message";
 
 import styles from "./messages-handler.module.scss";
 
@@ -19,19 +21,51 @@ export default function MessagesHandler({ message, userId }: IMessagesHandler) {
     const router = useRouter();
     const dispatch = useAppDispatch();
 
+    const errorMessage = <>Ошибка отображения компонента</>;
+
+    // Формирование нового объекта картинки
+    const newImage = (files: IFile[]) => {
+        return files.reduce((acc, file, index) => {
+            acc.push({
+                src: file.path,
+                alt: file.name,
+                id: file.id,
+                rows: files.length > 1 && index === 0 ? files.length - 1 : 1
+            });
+
+            return acc;
+        }, [] as IImage[]);
+    };
+
     switch (message.type) {
         case MessageTypes.MESSAGE:
             return <>{message.message}</>;
         case MessageTypes.WITH_FILE:
-            return <div>
-                <div>Иконка файла - Название файла - Размер файла</div>
-                {message.message}
-            </div>;
+            return message.files && message.files[0]
+                ? <div className={styles["message-type__message-with-file"]}>
+                    {message.fileExt && message.fileExt === FileVarieties.IMAGES
+                        ? <>
+                            <ImageMessage images={newImage([message.files[0] as IFile])} showBottomRadius={true} />
+                            <div className={styles["message-type__message-with-file__message"]}>{message.message}</div>
+                        </>
+                        : <>
+                            <FileComponent file={(message.files[0] as IFile)} visibleButtons={false} />
+                            {message.message}
+                        </>
+                    }
+                </div>
+                : errorMessage;
         case MessageTypes.FEW_FILES:
-            return <div>
-                <div>Иконка файла - Название файла - Размер файла</div>
-                <div>Иконка файла - Название файла - Размер файла</div>
-            </div>;
+            return message.files && message.files.length
+                ? <div className={styles["message-type__message-with-file"]}>
+                    {message.fileExt && message.fileExt === FileVarieties.IMAGES
+                        ? <ImageMessage images={newImage(message.files as IFile[])} />
+                        : (message.files as IFile[]).map(file =>
+                            <FileComponent key={file.id} file={file} visibleButtons={false} />
+                        )
+                    }
+                </div>
+                : errorMessage;
         case MessageTypes.VOICE:
             return <div>
                 Иконка файла - Название файла - Размер файла
@@ -71,12 +105,12 @@ export default function MessagesHandler({ message, userId }: IMessagesHandler) {
                     </div>
                 </div>;
             } else {
-                return null;
+                return errorMessage;
             }
         }
 
         default:
             catchErrors.catch("Неизвестный тип сообщения: " + message.type, router, dispatch)
-            return null;
+            return errorMessage;
     }
 };

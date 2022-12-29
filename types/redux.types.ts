@@ -6,6 +6,7 @@ import { IChatInfo, IFriendInfo } from "../pages/messages/[id]";
 import store from "../state/store";
 import { IMessage, IUser, IUserDetails } from "./models.types";
 import { ICallData } from "./socket.types";
+import { IImage } from "../components/messages-module/image-message";
 
 export type InitialStateType = {
     user: IUser | null;
@@ -21,6 +22,7 @@ export type InitialStateType = {
     friendTab: number;
     globalUserLoading: boolean;
     globalCall: null | ICallData;
+    imagesInCarousel: { images: IImage[]; index: number; } | null;
     dialogs: IDialog[];
     messages: IMessage[];
     tempChats: { [chatId: string]: Omit<ITempChatId, "chatId"> };
