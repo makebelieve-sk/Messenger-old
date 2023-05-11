@@ -3,7 +3,7 @@ import { NextRouter } from "next/router";
 import catchErrors from "../../core/catch-errors";
 
 // TODO
-// Перепроверить
+// Перепроверить, также перепроверить где он используется
 class AppWorker {
     filedata: null | any;
 

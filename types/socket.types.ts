@@ -1,8 +1,8 @@
 import { Socket } from "socket.io";
-import { ITempChatId } from "../components/friends-module/friends-list";
-import { SocketActions, CallStatus, SocketChannelErrorTypes, SettingType, MessageTypes } from "./enums";
+import { SocketActions, CallStatus, SocketChannelErrorTypes, SettingType, MessageTypes, MessageReadStatus } from "./enums";
 import { IChatInfo, IFriendInfo } from "../pages/messages/[id]";
 import { IMessage, IUser } from "./models.types";
+import { ITempChatId } from "../components/friends-module/content/friends-list";
 
 export interface ISocketUsers {
     [userId: string]: {
@@ -32,6 +32,7 @@ interface ICallData {
 interface ClientToServerEvents {
     [SocketActions.FRIENDS]: (data: ISocketData) => void;
     [SocketActions.MESSAGE]: ({ data, friendId }: { data: IMessage; friendId: string; }) => void;
+    [SocketActions.CHANGE_READ_STATUS]: ({ isRead, messages }: { isRead: MessageReadStatus; messages: IMessage[]; }) => void;
     [SocketActions.SET_TEMP_CHAT_ID]: (tempChatId: ITempChatId) => void;
     [SocketActions.CALL]: ({ roomId, users, chatInfo }: { 
         roomId: string;
@@ -49,7 +50,7 @@ interface ClientToServerEvents {
     [SocketActions.END_CALL]: ({ roomId, usersInCall }: { roomId: string; usersInCall?: IFriendInfo[]; }) => void;
     [SocketActions.CHANGE_STREAM]: ({ type, value, roomId }: { type: SettingType; value: boolean; roomId: string; }) => void;
     [SocketActions.GET_NEW_MESSAGE_ON_SERVER]: ({ id, type }: { id: string; type: MessageTypes; }) => void;
-    [SocketActions.NOTIFY_WRITE]: ({ isWrite, friendId }: { isWrite: boolean; friendId: string; }) => void;
+    [SocketActions.NOTIFY_WRITE]: ({ isWrite, friendId, chatId, notifyAuthor }: { isWrite: boolean; friendId: string; chatId?: string | null; notifyAuthor: string; }) => void;
     [SocketActions.IS_TALKING]: ({ roomId, isTalking }: { roomId: string; isTalking: boolean; }) => void;
 };
 
@@ -57,9 +58,11 @@ interface ClientToServerEvents {
 interface ServerToClientEvents {
     [SocketActions.GET_ALL_USERS]: (users: ISocketUsers) => void;
     [SocketActions.GET_NEW_USER]: (user: IUser) => void;
+    [SocketActions.USER_DISCONNECT]: (userId: string) => void;
     [SocketActions.ADD_TO_FRIENDS]: () => void;
     [SocketActions.UNSUBSCRIBE]: () => void;
     [SocketActions.SEND_MESSAGE]: (message: IMessage) => void;
+    [SocketActions.ACCEPT_CHANGE_READ_STATUS]: ({ message }: { message: IMessage; }) => void;
     [SocketActions.SET_TEMP_CHAT_ID]: (tempChatId: ITempChatId) => void;
     [SocketActions.NOTIFY_CALL]: ({ roomId, chatInfo, users }: ICallData) => void;
     [SocketActions.ADD_PEER]: ({ peerId, createOffer, userId }: { peerId: string; createOffer: boolean; userId: string }) => void;
@@ -70,7 +73,7 @@ interface ServerToClientEvents {
     [SocketActions.SOCKET_CHANNEL_ERROR]: ({ message, type }: { message: string; type: SocketChannelErrorTypes; }) => void;
     [SocketActions.CHANGE_STREAM]: ({ type, value, peerId }: { type: SettingType; value: boolean; peerId: string; }) => void;
     [SocketActions.ADD_NEW_MESSAGE]: ({ newMessage }: { newMessage: IMessage; }) => void;
-    [SocketActions.NOTIFY_WRITE]: ({ isWrite }: { isWrite: boolean; }) => void;
+    [SocketActions.NOTIFY_WRITE]: ({ isWrite, chatId, notifyAuthor }: { isWrite: boolean; chatId?: string | null; notifyAuthor: string; }) => void;
     [SocketActions.CANCEL_CALL]: () => void;
     [SocketActions.ALREADY_IN_CALL]: ({ roomId, chatInfo, users }: ICallData) => void;
     [SocketActions.NOT_ALREADY_IN_CALL]: () => void;

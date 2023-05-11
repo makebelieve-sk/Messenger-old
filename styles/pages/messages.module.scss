@@ -1,6 +1,5 @@
 @import "styles/colors";
 @import "styles/variables";
-
 .messages-container {
     padding: 20px;
     min-height: calc(100vh - $calcHeight);
@@ -8,7 +7,7 @@
     position: relative;
     &__skeleton-container {
         div {
-            display: flex;  
+            display: flex;
             justify-content: flex-start;
             align-items: center;
             width: 100%;
@@ -44,35 +43,6 @@
         overflow-y: auto;
         &__is-more {
             margin: 0 auto;
-        }
-    }
-    &__item {
-        &:hover {
-            cursor: pointer;
-        }
-        &__avatar {
-            width: 50px;
-            height: 50px;
-        }
-        &__dialog-name {
-            font-size: 14px;
-            color: $black;
-            font-weight: 500;
-            -webkit-font-smoothing: subpixel-antialiased;
-        }
-        &__secondary {
-            display: flex;
-            align-items: center;
-            margin-top: 8px;
-            font-size: 13px;
-            color: $dark-blue;
-        }
-        &__author-avatar {
-            margin-right: 7px;
-        }
-        &__dialog-date {
-            opacity: 0.5;
-            font-size: 14px;
         }
     }
     &__no-dialogs {

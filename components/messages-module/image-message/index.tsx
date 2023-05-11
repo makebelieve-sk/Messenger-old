@@ -1,5 +1,6 @@
 import React from "react";
-import { ImageList, ImageListItem } from "@mui/material";
+import ImageList from "@mui/material/ImageList";
+import ImageListItem from "@mui/material/ImageListItem";
 import { useAppDispatch } from "../../../hooks/useGlobalState";
 import { setImagesInCarousel } from "../../../state/main/slice";
 
@@ -11,6 +12,10 @@ export interface IImage {
     alt: string;
     cols?: number;
     rows?: number;
+    authorName?: string;
+    authorAvatarUrl?: string;
+    dateTime?: string;
+    fromProfile?: boolean;
 };
 
 interface IImageComponent {
@@ -18,8 +23,10 @@ interface IImageComponent {
     showBottomRadius?: boolean;
 };
 
+const SRC = process.env.CLIENT_URL || "http://localhost:3000/";
+
 export const ImageMessage = React.memo(({ images, showBottomRadius = false }: IImageComponent) => {
-    images = images.map(image => ({ ...image, src: "http://localhost:3000/" + image.src.slice(7) }));
+    images = images.map(image => ({ ...image, src: SRC + image.src.slice(7) }));
 
     const dispatch = useAppDispatch();
     

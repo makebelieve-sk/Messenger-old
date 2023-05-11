@@ -1,12 +1,17 @@
 import React from "react";
-import { Box, Grid, TextField, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Grid from "@mui/material/Grid";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import LockIcon from "@mui/icons-material/Lock";
 import InputMask from "react-input-mask";
 import dynamic from "next/dynamic";
 import { IFormState } from "../../pages/sign-up";
 import { REQUIRED_FIELD } from "../../common";
 
-const NiceInputPassword = dynamic(() => import("react-nice-input-password"), { ssr: false });
+import styles from "./sign-up.module.scss";
+
+const NiceInputPassword = dynamic(() => import("react-nice-input-password"), { ssr: false }) as any;
 
 interface ISignUpForm {
     formValues: IFormState;
@@ -16,7 +21,7 @@ interface ISignUpForm {
     setVisible: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-export default function SignUpForm({ visible, setVisible, formValues, setFormValues, onChange }: ISignUpForm) {
+export default React.memo(function SignUpForm({ visible, setVisible, formValues, setFormValues, onChange }: ISignUpForm) {
     const checkPassword = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormValues({
             values: {
@@ -79,7 +84,7 @@ export default function SignUpForm({ visible, setVisible, formValues, setFormVal
     };
 
     return (
-        <Box sx={{ mt: 3 }}>
+        <Box className={styles["sign-up-form"]}>
             <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                     <TextField
@@ -236,4 +241,4 @@ export default function SignUpForm({ visible, setVisible, formValues, setFormVal
             </Grid>
         </Box>
     );
-};
+});

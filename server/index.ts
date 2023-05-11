@@ -35,6 +35,8 @@ const COOKIE_NAME = process.env.COOKIE_NAME || "sid";
 const SECRET_KEY = process.env.SECRET_KEY || "SECRET_KEY";
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
 
+const users: ISocketUsers = {};
+
 // Создание воркера и его слушателей
 function createWorker() {
     const worker = cluster.fork();
@@ -79,10 +81,10 @@ if (cluster.isPrimary) {
     });
 
     // TODO
+    // Разобраться с синхронизацией (несколько пользователей попадают на разные серверы?)
     // Проверить закрытие воркера/сокета
     // Отлавливать событие неконнекта к редису (выдать ошибку на фронт)
     // Добавить условие включения secure: true по протоколу https (включить ssl) - режим продакшена
-    // Вместо socket.id (не рекомендуется в доке) использовать id сессии (которая передается в куках и храниться на Redis-сервере)
 
     // Инициализация Redis-сервера
     const RedisStore = connectRedis(session);
@@ -95,8 +97,6 @@ if (cluster.isPrimary) {
         await publisher.connect();
         await subscriber.connect();
     })();
-
-    const users: ISocketUsers = {};
 
     // Мидлвары сервера
     app.use(cors({ credentials: true, origin: CLIENT_URL }));        // Для CORS-заголовков
@@ -129,7 +129,7 @@ if (cluster.isPrimary) {
     AuthRouter(app, passport);
     FileRouter(app);
     UserRouter(app);
-    FriendsRouter(app);
+    FriendsRouter(app, users);
     MessagesRouter(app);
 
     // В режиме production возвращаем билд фронтенда
@@ -171,7 +171,7 @@ if (cluster.isPrimary) {
             // Отправляем всем пользователям обновленный список активных пользователей
             socket.emit(SocketActions.GET_ALL_USERS, users);
 
-            // Оповещаем все сокеты (кроме себя) об обнаружении нового открытия приложения через браузер
+            // Оповещаем все сокеты (кроме себя) о новом пользователе
             socket.broadcast.emit(SocketActions.GET_NEW_USER, user);
 
             // Отправка уведомления, если пользователь вошел после того, как я создал первый с ним диалог
@@ -233,6 +233,21 @@ if (cluster.isPrimary) {
                     if (users[friendId] && users[userId]) {
                         socket.broadcast.to(users[friendId].socketID).emit(SocketActions.SEND_MESSAGE, data);
                     }
+                }
+            });
+
+            // Изменяем состояние прочитанности у сообщения
+            socket.on(SocketActions.CHANGE_READ_STATUS, async ({ isRead, messages }) => {
+                if (messages && messages.length) {
+                    // Для каждого сообщения, автору этого сообщения отправляем уведомление о том, что мы прочитали его
+                    messages.forEach(message => {
+                        const authorId = message.userId;
+                        message.isRead = isRead;
+
+                        if (users[authorId] && authorId !== userID) {
+                            socket.broadcast.to(users[authorId].socketID).emit(SocketActions.ACCEPT_CHANGE_READ_STATUS, { message });
+                        }
+                    });
                 }
             });
 
@@ -555,9 +570,9 @@ if (cluster.isPrimary) {
             });
 
             // Уведомление собеседников о том, что я набираю сообщение
-            socket.on(SocketActions.NOTIFY_WRITE, ({ isWrite, friendId }) => {
+            socket.on(SocketActions.NOTIFY_WRITE, ({ isWrite, friendId, chatId, notifyAuthor }) => {
                 if (users[friendId]) {
-                    io.to(users[friendId].socketID).emit(SocketActions.NOTIFY_WRITE, { isWrite });
+                    io.to(users[friendId].socketID).emit(SocketActions.NOTIFY_WRITE, { isWrite, chatId, notifyAuthor });
                 }
             });
 
@@ -597,6 +612,9 @@ if (cluster.isPrimary) {
                 console.log(`Сокет с id: ${socketID} отключился по причине: ${reason}`);
 
                 delete users[userID];
+
+                // Оповещаем все сокеты (кроме себя) об отключении пользователя
+                socket.broadcast.emit(SocketActions.USER_DISCONNECT, userID);
             });
         } catch (error) {
             console.error("Произошла ошибка при работе с сокетом: ", error);

@@ -32,6 +32,10 @@ const UserDetailModel = sequelize.define<UserDetailsInstance, IUserDetails>("Use
   sex: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  photos: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 });
 

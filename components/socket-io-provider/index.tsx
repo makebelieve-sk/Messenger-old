@@ -1,5 +1,4 @@
 import React from "react";
-import { v4 as uuid } from "uuid";
 import { useRouter } from "next/router";
 import { io, Socket } from "socket.io-client";
 import { SOCKET_IO_CLIENT } from "../../common";
@@ -8,9 +7,9 @@ import { useAppDispatch } from "../../hooks/useGlobalState";
 import { resetCallStore } from "../../hooks/useWebRTC";
 import { setCallId, setChatInfo, setModalVisible, setStatus, setUsers } from "../../state/calls/slice";
 import { setSystemError } from "../../state/error/slice";
-import { setFriendNotification, setGlobalInCall } from "../../state/main/slice";
-import { setMessage, setTempChat, setWriteMessage } from "../../state/messages/slice";
-import { CallStatus, MessageTypes, Pages, SocketActions, SocketChannelErrorTypes } from "../../types/enums";
+import { deleteOnlineUser, setFriendNotification, setGlobalInCall, setMessageNotification, setOnlineUsers } from "../../state/main/slice";
+import { changeLastMessageInDialog, changeUnReadMessagesCountInDialogs, setMessage, setNotifyAuthor, setTempChat, setWriteMessage, updateMessage } from "../../state/messages/slice";
+import { CallStatus, FriendsNoticeTypes, MessagesNoticeTypes, Pages, SocketActions, SocketChannelErrorTypes } from "../../types/enums";
 import { IUser } from "../../types/models.types";
 import { ClientToServerEvents, ServerToClientEvents } from "../../types/socket.types";
 
@@ -41,35 +40,84 @@ export default function SocketIOProvider({ user, children }: ISocketIOProvider) 
             socketRef.current.on("connect", () => {
                 if (socketRef.current) {
                     // Список всех онлайн пользователей
-                    socketRef.current.on(SocketActions.GET_ALL_USERS, (allUsers) => {
-                        console.log('Юзеры онлайн: ', allUsers);
+                    socketRef.current.on(SocketActions.GET_ALL_USERS, (users) => {
+                        const allOnlineUsers = Object.values(users).map(onlineUser => {
+                            if (onlineUser.userID !== user.id) {
+                                return onlineUser.user;
+                            }
+                        });
+
+                        if (allOnlineUsers && allOnlineUsers.length) {
+                            allOnlineUsers.forEach(onlineUser => {
+                                if (onlineUser) {
+                                    dispatch(setOnlineUsers(onlineUser));
+                                }
+                            });
+                        }
+
+                        console.log('Юзеры онлайн: ', users);
                     });
 
                     // Новый пользователь онлайн
                     socketRef.current.on(SocketActions.GET_NEW_USER, (newUser) => {
+                        dispatch(setOnlineUsers(newUser));
                         console.log('Новый юзер: ', newUser);
+                    });
+
+                    // Новый пользователь онлайн
+                    socketRef.current.on(SocketActions.USER_DISCONNECT, (userId) => {
+                        dispatch(deleteOnlineUser(userId));
+                        console.log('Юзер отключился: ', userId);
                     });
 
                     // Подписываемся на пользователя
                     socketRef.current.on(SocketActions.ADD_TO_FRIENDS, () => {
-                        dispatch(setFriendNotification(1));
+                        dispatch(setFriendNotification(FriendsNoticeTypes.ADD));
                     });
 
                     // Отписываемся от пользователя
                     socketRef.current.on(SocketActions.UNSUBSCRIBE, () => {
-                        dispatch(setFriendNotification(-1));
+                        dispatch(setFriendNotification(FriendsNoticeTypes.REMOVE));
                     });
 
                     // Получаем сообщение от пользователя
                     socketRef.current.on(SocketActions.SEND_MESSAGE, (message) => {
-                        if (window.location.pathname.toLowerCase() === Pages.messages + "/" + message.chatId.toLowerCase()) {
-                            dispatch(setMessage({ message, isVisibleUnReadMessages: message.id, updateCounter: true }));
-                            dispatch(setWriteMessage(false));
+                        if (message) {
+                            if (window.location.pathname.toLowerCase() === Pages.messages + "/" + message.chatId.toLowerCase()) {
+                                dispatch(setMessage({ message, isVisibleUnReadMessages: message.id, updateCounter: true, userId: user.id, notUpdateUnReadMessage: true }));
+                                dispatch(setWriteMessage(false));
+                            } else {
+                                // Обновляем счетчик непрочитанных сообщений для меню
+                                dispatch(setMessageNotification({ type: MessagesNoticeTypes.ADD, chatId: message.chatId }));
+                                // Обновляем счетчик непрочитанных сообщений для текущего диалога и последнее сообщение по сокету
+                                dispatch(changeUnReadMessagesCountInDialogs({ 
+                                    chatId: message.chatId, 
+                                    counter: undefined, 
+                                    updateLastMessage: {
+                                        message: message.message
+                                    }
+                                }));
+                                // Добавляем звуковое уведомление о новом сообщении
+                                new Audio("/audios/new-message-notification.mp3")
+                                    .play()
+                                    .catch(error => catchErrors.catch(
+                                        "Произошла ошибка при проигрывании аудиофайла в момент получения нового сообщения: " + error,
+                                        router,
+                                        dispatch
+                                    ));
+                            }
 
-                            // Чтение сообщения
-                            // Request.post(ApiRoutes.readMessage, { ids: [message.id] }, undefined, undefined, 
-                            //     (error: any) => CatchErrors.catch(error, router, dispatch)
-                            // );
+                            // Обновляем последнее сообщение в диалогах
+                            dispatch(changeLastMessageInDialog(message));
+                        }
+                    });
+
+                    // Получаем уведомление о том, что кто-то прочитал наше сообщение
+                    socketRef.current.on(SocketActions.ACCEPT_CHANGE_READ_STATUS, ({ message }) => {
+                        if (message) {
+                            if (window.location.pathname.toLowerCase() === Pages.messages + "/" + message.chatId.toLowerCase()) {
+                                dispatch(updateMessage({ message, field: "isRead" }));
+                            }
                         }
                     });
 
@@ -87,8 +135,12 @@ export default function SocketIOProvider({ user, children }: ISocketIOProvider) 
                     });
 
                     // Отрисовываем сообщение о том, что собеседник набирает сообщение
-                    socketRef.current.on(SocketActions.NOTIFY_WRITE, ({ isWrite }) => {
-                        dispatch(setWriteMessage(isWrite));
+                    socketRef.current.on(SocketActions.NOTIFY_WRITE, ({ isWrite, chatId, notifyAuthor }) => {
+                        if (chatId && window.location.pathname.toLowerCase() === Pages.messages + "/" + chatId.toLowerCase()) {
+                            dispatch(setWriteMessage(isWrite));
+                        }
+
+                        dispatch(setNotifyAuthor({ chatId, notifyAuthor }));
                     });
 
                     // Меня уведомляют о новом звонке (одиночный/групповой)

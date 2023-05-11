@@ -1,8 +1,18 @@
 import React from "react";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
+import { createTheme, ThemeProvider } from "@mui/material";
+import Grid from "@mui/material/Grid";
+import CssBaseline from "@mui/material/CssBaseline";
+import Box from "@mui/material/Box";
+import Avatar from "@mui/material/Avatar";
+import Typography from "@mui/material/Typography";
+import TextField from "@mui/material/TextField";
+import Paper from "@mui/material/Paper";
+import Link from "@mui/material/Link";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
 import { LoadingButton } from "@mui/lab";
-import { Avatar, Box, Checkbox, createTheme, CssBaseline, FormControlLabel, Grid, Link, Paper, TextField, ThemeProvider, Typography } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Copyright from "../components/copyright";
 import { useAppDispatch } from "../hooks/useGlobalState";
@@ -41,6 +51,7 @@ export default function SignIn() {
         setSaveDisabled(loading || !formValues.values.login || !formValues.values.password || Object.values(formValues.errors).some(Boolean));
     }, [loading, formValues]);
 
+    // Изменение поля
     const onChange = (field: string, value: string | boolean) => {
         setFormValues({
             values: { ...formValues.values, [field]: value },
@@ -49,6 +60,7 @@ export default function SignIn() {
         setErrorFromServer(false);
     };
 
+    // Отправка формы
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         try {
             event.preventDefault();
@@ -156,20 +168,20 @@ export default function SignIn() {
 
                             <Grid container>
                                 <Grid item xs>
-                                    <Link href="/reset-password" variant="body2" onClick={() => router.push("/reset-password")}>
+                                    <Link href={Pages.resetPassword} variant="body2" onClick={() => router.push(Pages.resetPassword)}>
                                         Забыли пароль?
                                     </Link>
                                 </Grid>
 
                                 <Grid item>
-                                    <Link href="/sign-up" variant="body2" onClick={() => router.push("/sign-up")}>
+                                    <Link href={Pages.signUp} variant="body2" onClick={() => router.push(Pages.signUp)}>
                                         Нет аккаунта? Зарегистрируйтесь!
                                     </Link>
                                 </Grid>
                             </Grid>
                         </Box>
 
-                        <Copyright sx={{ mt: 5 }} />
+                        <Copyright />
                     </Box>
                 </Grid>
             </Grid>

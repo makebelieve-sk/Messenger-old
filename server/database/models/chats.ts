@@ -16,7 +16,7 @@ const ChatsModel = sequelize.define<ChatsDetailsInstance, IChat>("Chats", {
     allowNull: true,
   },
   userIds: {
-    type: DataTypes.UUIDV4,
+    type: DataTypes.TEXT,
     allowNull: false,
     field: "user_ids"
   }

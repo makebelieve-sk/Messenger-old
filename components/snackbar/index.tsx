@@ -1,5 +1,5 @@
-import { Snackbar } from "@mui/material";
 import React from "react";
+import Snackbar from "@mui/material/Snackbar";
 
 interface ISnackBarComponent {
     anchor: { vertical: "top" | "bottom"; horizontal: "left" | "center" | "right"; };

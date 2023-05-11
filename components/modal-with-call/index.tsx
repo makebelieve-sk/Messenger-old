@@ -1,5 +1,7 @@
 import React from "react";
-import { CircularProgress, Dialog, DialogContent } from "@mui/material";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import CircularProgress from "@mui/material/CircularProgress";
 import MicOffOutlinedIcon from "@mui/icons-material/MicOffOutlined";
 import Status from "./status";
 import Buttons from "./buttons";
@@ -13,7 +15,7 @@ import { NO_PHOTO } from "../../common";
 
 import styles from "./modal-with-call.module.scss";
 
-export default function ModalWithCall() {
+export default React.memo(function ModalWithCall() {
     const [open, setOpen] = React.useState(false);
 
     const { visible, status, chatInfo } = useAppSelector(selectCallsState);
@@ -113,7 +115,7 @@ export default function ModalWithCall() {
                         }
                     </div>
 
-                    {/* Кнопки действия звонка */}
+                    {/* Кнопки действий звонка */}
                     <div className={styles["call-container__buttons-block"]}>
                         <Buttons
                             status={status}
@@ -129,4 +131,4 @@ export default function ModalWithCall() {
             }
         </DialogContent>
     </Dialog>
-};
+});

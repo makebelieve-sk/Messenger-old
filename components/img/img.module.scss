@@ -1,0 +1,18 @@
+@import "../../styles/colors.scss";
+.img-component__wrapper {
+    position: relative;
+    &__close-icon {
+        position: absolute;
+        top: 7px;
+        right: 7px;
+        background-color: $black;
+        color: $light-grey;
+        display: flex;
+        padding-left: 4px;
+        padding-right: 4px;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        font-size: 12.5px;
+        border-radius: 3px;
+    }
+}

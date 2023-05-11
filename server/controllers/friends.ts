@@ -1,7 +1,7 @@
 import { Request, Response, Express } from "express";
-import { Op } from "sequelize";
 import { Transaction } from "sequelize/types";
 import { ApiRoutes, ErrorTexts, FriendsTab, HTTPStatuses } from "../../types/enums";
+import { ISocketUsers } from "../../types/socket.types";
 import { sequelize } from "../database";
 import ChatsModel from "../database/models/chats";
 import FriendsModel from "../database/models/friends";
@@ -10,7 +10,7 @@ import UserModel from "../database/models/users";
 import { mustAuthenticated } from "../middlewares";
 
 class FriendsController {
-    possibleUsersQuery(userId: string, all: boolean = false) {
+    possibleUsersQuery(userId: string, all: boolean = false, searchValue = "") {
         return `
             SELECT ${all ? "" : "TOP (5)"} users.[id], [first_name] AS [firstName], [second_name] AS [secondName], [third_name] AS [thirdName], [email], [phone], [avatar_url] as avatarUrl
             FROM [VK_CLONE].[dbo].[Users] AS users
@@ -24,7 +24,7 @@ class FriendsController {
                 SELECT user_id
                 FROM [VK_CLONE].[dbo].[Subscribers] AS subscribersIn
                 WHERE subscribers.subscriber_id = '${userId}'
-            )
+            ) ${searchValue}
         `;
     };
 
@@ -47,22 +47,28 @@ class FriendsController {
     };
 
     // Получение 5 возможных друзей, всех друзей и друзей онлайн
-    async getFriends(req: Request, res: Response) {
+    async getFriends(req: Request, res: Response, users: ISocketUsers) {
         try {
-            const { userId, tab = 0 }: { userId: string; tab: number; } = req.body;
+            const { userId, tab = 0, search }: { userId: string; tab: number; search: string; } = req.body;
+
+            const searchValue = search ? search.replace(/\`\'\.\,\;\:\\\//g, "\"").trim().toLowerCase() : "";
+
+            const searchQuery = searchValue
+                ? `AND (LOWER(users.first_name) LIKE '%${searchValue}%' OR LOWER(users.third_name) LIKE '%${searchValue}%')`
+                : "";
 
             switch (tab) {
                 // Получение всех друзей
                 case FriendsTab.all: {
                     const friends = await sequelize.query(`
-                        SELECT users.[id], [first_name] AS [firstName], [second_name] AS [secondName], [third_name] AS [thirdName], [email], [phone], [avatar_url] as avatarUrl
+                        SELECT DISTINCT users.[id], [first_name] AS [firstName], [second_name] AS [secondName], [third_name] AS [thirdName], [email], [phone], [avatar_url] as avatarUrl
                         FROM [VK_CLONE].[dbo].[Users] AS users
                         JOIN [VK_CLONE].[dbo].[Friends] AS friends ON friends.user_id = users.id
                         WHERE users.id != '${userId}' AND users.id IN (
                             SELECT friend_id
                             FROM [VK_CLONE].[dbo].[Friends] AS friendsIn
                             WHERE friendsIn.user_id = '${userId}'
-                        )
+                        ) ${searchQuery}
                     `);
 
                     if (friends && friends[0]) {
@@ -73,7 +79,36 @@ class FriendsController {
                 }
                 // Получение друзей-онлайн
                 case FriendsTab.online: {
+                    if (users) {
+                        const userObjects = Object.values(users);
 
+                        if (userObjects && userObjects.length) {
+                            const usersOnline = userObjects.map(userObject => userObject.user);
+
+                            const filterUsersOnline = usersOnline.filter(onlineUser => {
+                                const searchFN = onlineUser.firstName.toLowerCase();
+                                const searchTN = onlineUser.thirdName.toLowerCase();
+
+                                if (onlineUser.id !== userId) {
+                                    if (searchValue && (searchFN.includes(searchValue) || searchTN.includes(searchValue))) {
+                                        return true;
+                                    } else if (searchValue && !searchFN.includes(searchValue) && !searchTN.includes(searchValue)) {
+                                        return false;
+                                    }
+
+                                    return true;
+                                }
+
+                                return false;
+                            });
+
+                            return res.json({ success: true, friends: filterUsersOnline });
+                        } else {
+                            throw new Error("Ошибка на сервере: нет пользователей (tab=1)");
+                        }
+                    } else {
+                        throw new Error("Ошибка на сервере: нет пользователей (tab=1)");
+                    }
                 }
                 // Получение подписчиков
                 case FriendsTab.subscribers: {
@@ -85,13 +120,13 @@ class FriendsController {
                             SELECT subscriber_id
                             FROM [VK_CLONE].[dbo].[Subscribers] AS subscribersIn
                             WHERE subscribersIn.user_id = '${userId}' AND left_in_subs = 1
-                        )
+                        ) ${searchQuery}
                     `);
 
                     if (friends && friends[0]) {
                         return res.json({ success: true, friends: friends[0] });
                     } else {
-                        throw new Error("Запрос выполнился некорректно и ничего не вернул (tab=3)");
+                        throw new Error("Запрос выполнился некорректно и ничего не вернул (tab=2)");
                     }
                 }
                 // Получение входящих заявок
@@ -104,7 +139,7 @@ class FriendsController {
                             SELECT subscriber_id
                             FROM [VK_CLONE].[dbo].[Subscribers] AS subscribersIn
                             WHERE subscribersIn.user_id = '${userId}' AND left_in_subs = 0
-                        )
+                        ) ${searchQuery}
                     `);
 
                     if (friends && friends[0]) {
@@ -123,7 +158,7 @@ class FriendsController {
                             SELECT user_id
                             FROM [VK_CLONE].[dbo].[Subscribers] AS subscribersIn
                             WHERE subscribersIn.subscriber_id = '${userId}'
-                        )
+                        ) ${searchQuery}
                     `);
 
                     if (friends && friends[0]) {
@@ -134,7 +169,7 @@ class FriendsController {
                 }
                 // Поиск друзей
                 case FriendsTab.search: {
-                    const friends = await sequelize.query(new FriendsController().possibleUsersQuery(userId, true));
+                    const friends = await sequelize.query(new FriendsController().possibleUsersQuery(userId, true, searchQuery));
 
                     if (friends && friends[0]) {
                         return res.json({ success: true, friends: friends[0] });
@@ -217,7 +252,7 @@ class FriendsController {
             `);
 
             const topFriends = await sequelize.query(`
-                SELECT TOP(6) users.[id], [first_name] AS [firstName], [second_name] AS [secondName], [third_name] AS [thirdName], [email], [phone], [avatar_url] as avatarUrl
+                SELECT DISTINCT TOP(6) users.[id], [first_name] AS [firstName], [second_name] AS [secondName], [third_name] AS [thirdName], [email], [phone], [avatar_url] as avatarUrl
                 FROM [VK_CLONE].[dbo].[Users] AS users
                 JOIN [VK_CLONE].[dbo].[Friends] AS friends ON friends.user_id = users.id
                 WHERE users.id != '${userId}' AND users.id IN (
@@ -240,7 +275,7 @@ class FriendsController {
 
             return res.json({ 
                 success: true, 
-                friendsCount: friendsCount && friendsCount[0] ? friendsCount[0][0].count : null, 
+                friendsCount: friendsCount && friendsCount[0] ? topFriends[0].length : null, 
                 topFriends: topFriends && topFriends[0] ? topFriends[0] : null, 
                 subscribersCount: subscribersCount && subscribersCount[0] ? subscribersCount[0][0].count : null
             });
@@ -422,9 +457,9 @@ class FriendsController {
 
 const friendsController = new FriendsController();
 
-export default function FriendsRouter(app: Express) {
+export default function FriendsRouter(app: Express, users: ISocketUsers) {
     app.post(ApiRoutes.getPossibleUsers, mustAuthenticated, friendsController.getPossibleUsers);
-    app.post(ApiRoutes.getFriends, mustAuthenticated, friendsController.getFriends);
+    app.post(ApiRoutes.getFriends, mustAuthenticated, (req, res) => friendsController.getFriends(req, res, users));
     app.post(ApiRoutes.getFriendInfo, mustAuthenticated, friendsController.getFriendInfo);
     app.post(ApiRoutes.getCountFriends, mustAuthenticated, friendsController.getCountFriends);
     app.post(ApiRoutes.addToFriend, mustAuthenticated, friendsController.addToFriend);

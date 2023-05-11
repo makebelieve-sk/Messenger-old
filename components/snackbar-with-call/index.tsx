@@ -1,6 +1,8 @@
 import React from "react";
 import { Socket } from "socket.io-client";
-import { Avatar, Button, Snackbar } from "@mui/material";
+import Snackbar from "@mui/material/Snackbar";
+import Avatar from "@mui/material/Avatar";
+import Button from "@mui/material/Button";
 import PhoneCallbackOutlinedIcon from "@mui/icons-material/PhoneCallbackOutlined";
 import PhoneForwardedOutlinedIcon from "@mui/icons-material/PhoneForwardedOutlined";
 import CallEndOutlinedIcon from "@mui/icons-material/CallEndOutlined";
@@ -12,7 +14,7 @@ import { ClientToServerEvents, ServerToClientEvents } from "../../types/socket.t
 
 import styles from "./snackbar-with-call.module.scss";
 
-export default function SnackBarWithCall() {
+export default React.memo(function SnackBarWithCall() {
     const [openSnack, setOpenSnack] = React.useState(false);
 
     const { globalCall } = useAppSelector(selectMainState);
@@ -76,4 +78,4 @@ export default function SnackBarWithCall() {
             <CallEndOutlinedIcon color="error" />
         </Button>}
     />;
-};
+});

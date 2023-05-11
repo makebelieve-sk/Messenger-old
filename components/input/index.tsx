@@ -1,5 +1,7 @@
 import React from "react";
+import { useAppSelector } from "../../hooks/useGlobalState";
 import { IFriendInfo } from "../../pages/messages/[id]";
+import { selectUserState } from "../../state/user/slice";
 import { MessageTypes, SocketActions } from "../../types/enums";
 import { SocketIOClient } from "../socket-io-provider";
 
@@ -7,14 +9,16 @@ import styles from "./input.module.scss";
 
 interface IInputComponent {
     friendInfo: IFriendInfo | null;
+    chatId: string | null;
     onSubmit: (messageProps?: { type: MessageTypes; files: File[]; } | null) => void;
 };
 
 // Компонент получает реф из родительского компонента
-export const InputComponent = React.forwardRef((
-    { friendInfo, onSubmit }: IInputComponent, 
+export const InputComponent = React.memo(React.forwardRef((
+    { friendInfo, chatId, onSubmit }: IInputComponent, 
     ref: React.ForwardedRef<HTMLDivElement>
 ) => {
+    const { user } = useAppSelector(selectUserState);
     const socket = React.useContext(SocketIOClient);
     
     let timerIsWrite: NodeJS.Timer | null = null;
@@ -36,13 +40,13 @@ export const InputComponent = React.forwardRef((
             timerIsWrite = null;
         }
 
-        if (socket && friendInfo) {
-            socket.emit(SocketActions.NOTIFY_WRITE, { isWrite: true, friendId: friendInfo.id });
+        if (socket && friendInfo && user) {
+            socket.emit(SocketActions.NOTIFY_WRITE, { isWrite: true, friendId: friendInfo.id, chatId, notifyAuthor: user.firstName + " " + user.thirdName });
         }
 
         timerIsWrite = setTimeout(() => {
             if (socket && friendInfo) {
-                socket.emit(SocketActions.NOTIFY_WRITE, { isWrite: false, friendId: friendInfo.id });
+                socket.emit(SocketActions.NOTIFY_WRITE, { isWrite: false, friendId: friendInfo.id, chatId, notifyAuthor: "" });
             }
         }, 7000);
     };
@@ -57,4 +61,4 @@ export const InputComponent = React.forwardRef((
         onKeyPress={onKeyPress}
         onInput={onInput}
     />
-});
+}));

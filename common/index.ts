@@ -1,5 +1,5 @@
 import { FileVarieties, MessageTypes } from "../types/enums";
-import { IFile, IMessage } from "../types/models.types";
+import { IFile, IMessage, IUser } from "../types/models.types";
 import { v4 as uuid } from "uuid";
 
 export const COOKIE_NAME = process.env.COOKIE_NAME || "sid";
@@ -18,7 +18,7 @@ export const getMonthName = (month: number) => {
 };
 
 // Выводим конечную дату
-export const transformDate = (d: string) => {
+export const transformDate = (d: string, getYear = false) => {
     const date = new Date(d);
     const months = [
         "января",
@@ -37,13 +37,19 @@ export const transformDate = (d: string) => {
 
     const dayNumber = date.getDate();
     const month = months[date.getMonth()];
-    const year = new Date().getMonth() - date.getMonth() >= 6 ? " " + date.getFullYear() : "";
+    const year = getYear 
+        ? " " + date.getFullYear() 
+        : new Date().getMonth() - date.getMonth() >= 6 
+            ? " " + date.getFullYear() 
+            : "";
 
     return dayNumber + " " + month + year;
 };
 
-// Лимит подгружаемых записей
-export const LIMIT = 15;
+// Лимит подгружаемых сообщений при первоначальной загрузке
+export const LIMIT = 25;
+// Лимит подгружаемых сообщений при "Загрузить еще"
+export const LOAD_MORE_LIMIT = 25;
 
 // Определяем, является ли чат групповым
 export const isSingleChat = (id: string) => id.length === 36;
@@ -181,4 +187,17 @@ export const handlingMessagesWithFiles = (messages: IMessage[]) => {
                 return acc;
         };
     }, [] as IMessage[]);
+};
+
+// Формирование массива объектов фотографий
+export const getPhotosInstance = (photos: string[], user: IUser | null) => {
+    if (photos && photos.length && user) {
+        return photos.map(photo => ({
+            id: uuid(),
+            alt: user.firstName + " " + user.thirdName,
+            src: photo
+        }));
+    }
+
+    return null;
 };

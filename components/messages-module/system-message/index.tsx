@@ -5,13 +5,14 @@ import styles from "./system-message.module.scss";
 
 interface ISystemMessage {
     date?: string;
+    deleteMarginTop?: boolean;
 };
 
-export default function SystemMessage({ date }: ISystemMessage) {
-    return <div className={styles["system-message-container"]}>
+export default React.memo(function SystemMessage({ date, deleteMarginTop }: ISystemMessage) {
+    return <div className={`${styles["system-message-container"]} ${date ? "" : "system-message-container__unread-message"} ${deleteMarginTop ? styles["system-message-container__mt-0"] : ""}`}>
         {date 
             ? transformDate(date)
             : "Непрочитанные сообщения"
         }
     </div>
-}
+});

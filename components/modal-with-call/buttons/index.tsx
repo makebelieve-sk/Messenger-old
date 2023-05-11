@@ -1,5 +1,6 @@
 import React from "react";
-import { Button, Tooltip } from "@mui/material";
+import Button from "@mui/material/Button";
+import Tooltip from "@mui/material/Tooltip";
 import MicNoneOutlinedIcon from "@mui/icons-material/MicNoneOutlined";
 import MicOffOutlinedIcon from "@mui/icons-material/MicOffOutlined";
 import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
@@ -20,7 +21,7 @@ interface IButtons {
     onEnd: () => void;
 };
 
-export default function Buttons({ status, settings, visibleVideo, onAccept, onToggle, onEnd }: IButtons) {
+export default React.memo(function Buttons({ status, settings, visibleVideo, onAccept, onToggle, onEnd }: IButtons) {
     // Завершение звонка
     const endCall = (title: string = "Завершить звонок") => <Tooltip title={title}>
         <Button color="error" variant="outlined" className={styles["call-container__button"]} onClick={onEnd}>
@@ -81,4 +82,4 @@ export default function Buttons({ status, settings, visibleVideo, onAccept, onTo
         default:
             return null;
     }
-};
+});

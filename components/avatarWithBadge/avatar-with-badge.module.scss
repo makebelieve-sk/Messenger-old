@@ -1,0 +1,28 @@
+@import "styles/colors";
+.avatar-badge {
+    span {
+        visibility: hidden;
+        box-shadow: 0 0 0 2px $white;
+        &::after {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            content: "";
+        }
+    }
+    &__active {
+        span {
+            visibility: visible;
+            background-color: $online-green;
+            color: $online-green;
+        }
+    }
+    &__avatar {
+        &:hover {
+            cursor: pointer;
+        }
+    }
+}

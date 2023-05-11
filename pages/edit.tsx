@@ -1,6 +1,10 @@
 import React from "react";
 import { useRouter } from "next/router";
-import { Box, CircularProgress, Paper, Tab, Tabs } from "@mui/material";
+import Paper from "@mui/material/Paper";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
 import { LoadingButton } from "@mui/lab";
 import dayjs from "dayjs";
 import EditTabsModule from "../components/edit-tabs-module";
@@ -51,9 +55,9 @@ export default function Edit() {
         setSaveDisabled(loading || Boolean(formErrors && Object.values(formErrors).some(Boolean)));
     }, [loading, formValues]);
 
+    // Получаем детальную информацию о пользователе
     React.useEffect(() => {
         if (!userDetail && user) {
-            // Получаем детальную информацию о пользователе
             Request.post(ApiRoutes.getUserDetail, { userId: user.id }, undefined,
                 (data: { success: boolean, userDetail: IUserDetails }) => dispatch(setUserDetail(data.userDetail ? data.userDetail : null)),
                 (error: any) => CatchErrors.catch(error, router, dispatch)
@@ -150,7 +154,7 @@ export default function Edit() {
                         fullWidth
                         type="submit"
                         variant="contained"
-                        sx={{ mt: 3, mb: 2 }}
+                        className={styles["edit-container__module__loading-button"]}
                         loading={loading}
                         disabled={saveDisabled}
                     >
@@ -164,7 +168,7 @@ export default function Edit() {
                         : null
                     }
                 </Box>
-                : <div className="edit-container__module__spinner"><CircularProgress /></div>
+                : <div className={styles["edit-container__module__spinner"]}><CircularProgress /></div>
             }
         </div>
     </Paper>

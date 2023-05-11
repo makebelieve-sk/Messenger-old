@@ -1,0 +1,47 @@
+@import "styles/colors";
+.messages-container__item {
+    padding-left: 0;
+    padding-right: 0;
+    &:hover {
+        cursor: pointer;
+    }
+    &__avatar {
+        width: 50px;
+        height: 50px;
+    }
+    &__dialog-name {
+        font-size: 14px;
+        color: $black;
+        font-weight: 500;
+        -webkit-font-smoothing: subpixel-antialiased;
+        margin-left: 10px;
+    }
+    &__secondary {
+        display: flex;
+        align-items: center;
+        margin-top: 8px;
+        font-size: 13px;
+        color: $dark-blue;
+    }
+    &__author-avatar {
+        margin-right: 7px;
+        width: 25px;
+        height: 25px;
+    }
+    &__dialog-date {
+        opacity: 0.5;
+        font-size: 13px;
+    }
+    &__unread-messages-count {
+        opacity: 1;
+        font-size: 11px;
+        border-radius: 50%;
+        background-color: $blue;
+        color: $white;
+        width: 22px;
+        height: 22px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+}

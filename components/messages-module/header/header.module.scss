@@ -1,5 +1,4 @@
 @import "styles/colors";
-
 .message-area-container--header {
     padding-right: 10px;
     height: 50px;
@@ -8,6 +7,21 @@
     justify-content: space-between;
     width: 100%;
     align-items: center;
+    .header-container--search-field-icon {
+        padding: 10px 5px 10px 10px;
+        color: $placeholder-grey;
+        height: 40px;
+        width: 40px;
+    }
+    .header-container--search-field {
+        font-size: 14px;
+        input {
+            padding: 0;
+        }
+    }
+    .header-container--cancel-search {
+        margin-left: 10px;
+    }
     .header-container--back {
         padding-left: 10px;
         display: flex;
@@ -70,5 +84,28 @@
     }
     .header-container--friend-name-loading {
         width: 100px;
+    }
+}
+
+.popover-text {
+    font-size: 14px;
+    color: #000000;
+    padding: 10px;
+    &:hover {
+        cursor: pointer;
+    }
+}
+
+.header-container--call-action {
+    display: flex;
+    align-items: center;
+    &--audio {
+        padding: 10px 10px 5px 10px;
+    }
+    &--video {
+        padding: 5px 10px 10px 10px;
+    }
+    &--icon {
+        margin-right: 10px;
     }
 }

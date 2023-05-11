@@ -47,7 +47,8 @@ class UserController {
                     sex, 
                     birthday, 
                     work,
-                    city
+                    city,
+                    photos: findUserDetail.photos
                 };
 
                 await UserDetailModel.update(result.userDetails, { where: { userId }, transaction });

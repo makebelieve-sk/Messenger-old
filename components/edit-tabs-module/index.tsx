@@ -18,7 +18,7 @@ enum TAB_NUMBER {
     CONTACTS = 1
 };
 
-export default function EditTabsModule({ tab, formValues, formErrors, onChange }: IEditTabsModule) {
+export default React.memo(function EditTabsModule({ tab, formValues, formErrors, onChange }: IEditTabsModule) {
     switch (tab) {
         case TAB_NUMBER.MAIN:
             return <div 
@@ -39,4 +39,4 @@ export default function EditTabsModule({ tab, formValues, formErrors, onChange }
         default:
             return null;
     }
-};
+});

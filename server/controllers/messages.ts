@@ -1,6 +1,8 @@
+import { v4 as uuid } from "uuid";
 import { Request, Response, Express } from "express";
 import { Op } from "sequelize";
-import { isSingleChat, LIMIT } from "../../common";
+import { Where } from "sequelize/types/utils";
+import { isSingleChat, LIMIT, LOAD_MORE_LIMIT } from "../../common";
 import { ApiRoutes, HTTPStatuses, MessageReadStatus } from "../../types/enums";
 import { IDialog } from "../../pages/messages";
 import { ICall, IFile, IMessage } from "../../types/models.types";
@@ -11,85 +13,155 @@ import MessagesModel from "../database/models/messages";
 import UserModel from "../database/models/users";
 import { mustAuthenticated } from "../middlewares";
 import FilesModel from "../database/models/files";
+import ReadMessagesModel from "../database/models/read_messages";
 
 class MessagesController {
     // Получить список всех диалогов
     async getDialogs(req: Request, res: Response) {
         try {
-            const { userId, page }: { userId: string; page: number; } = req.body;
+            const { userId, page, search }: { userId: string; page: number; search: string; } = req.body;
 
             if (!userId) {
                 throw new Error("Не передан id пользователя");
             }
 
-            const query = `
-                WITH a AS (
-                    SELECT TOP (1) message, chat_id AS chatId, create_date as createDate, user_id AS userId
-                    FROM [VK_CLONE].[dbo].[Messages]
-                    ORDER BY create_date DESC
-                )
-                SELECT chats.id, a.message, a.createDate, a.userId, chats.user_ids as userIds, users.first_name, users.third_name, users.avatar_url as avatarUrl
-                FROM [VK_CLONE].[dbo].[Chats] AS chats
-                LEFT JOIN a ON chats.id = a.chatId
-                LEFT JOIN [VK_CLONE].[dbo].[Users] AS users ON users.id = a.userId
-                WHERE chats.user_ids LIKE '%${userId}%'
-                ORDER BY a.createDate DESC
-                OFFSET ${page} ROWS FETCH NEXT ${LIMIT + 1} ROWS ONLY
-            `;
+            const prepearedSearch = search ? search.replace(/\`\'\.\,\;\:\\\//g, "\"").trim().toLowerCase() : "";
 
-            const moreDialogs: any = await sequelize.query(query);
+            const where = {
+                userIds: { [Op.like]: `%${userId}%` }
+            } as { userIds: any; search: Where };
 
-            if (moreDialogs && moreDialogs[0]) {
-                const dialogs = moreDialogs[0].length
-                    ? moreDialogs[0].length > LIMIT
-                        ? moreDialogs[0].slice(0, LIMIT)
-                        : moreDialogs[0]
-                    : [];
-                const isMore = Boolean(moreDialogs[0] && moreDialogs[0].length && moreDialogs[0].length > LIMIT);
+            if (prepearedSearch) {
+                where.search = sequelize.where(sequelize.fn("LOWER", sequelize.col("name")), "LIKE", `%${prepearedSearch}%`);
+            }
 
-                const updatedDialogs: IDialog[] = [];
+            // Находим все чаты с пользователем
+            const chats = await ChatsModel.findAll({
+                where,
+                attributes: ["id", "userIds", "name"],
+                offset: page,
+                limit: LIMIT + 1
+            });
+            const updatedChats: IDialog[] = [];
 
-                for (let i = 0; i < dialogs.length; i++) {
-                    const dialog = dialogs[i];
+            if (chats && chats.length) {
+                for (let i = 0; i < chats.length; i++) {
+                    const chat = chats[i];
+                    const chatObject = { id: chat.id, name: chat.name } as IDialog;
 
-                    if (dialog.userIds && isSingleChat(dialog.id)) {
-                        // Выполнять только при одиночном чате - здесь написать проверку типа чата
-                        const parsedUserIds = dialog.userIds.split(",");
+                    // Получаем количество непрочитанных сообщений для диалога
+                    const unReadMessagesCount = await sequelize.query(`
+                        SELECT COUNT(rm.message_id) AS unReadMessagesCount
+                        FROM [VK_CLONE].[dbo].[Read_messages] AS rm
+                        JOIN Messages AS m ON m.id = rm.message_id
+                        WHERE rm.is_read = 0 AND rm.user_id = '${userId}' and m.chat_id = '${chat.id}'
+                        GROUP BY m.chat_id
+                    `) as [{ unReadMessagesCount?: number }[], number];
+
+                    if (unReadMessagesCount && unReadMessagesCount[0]) {
+                        chatObject.unReadMessagesCount = unReadMessagesCount[0][0] && unReadMessagesCount[0][0].unReadMessagesCount
+                            ? unReadMessagesCount[0][0].unReadMessagesCount
+                            : 0;
+                    } else {
+                        throw "Запрос выполнился некорректно и ничего не вернул (getDialogs/unReadMessagesCount)";
+                    }
+
+                    // При одиночном чате находим получателя сообщения
+                    if (chat.userIds && isSingleChat(chat.id)) {
+                        const parsedUserIds = (chat.userIds as never as string).split(",");
 
                         if (parsedUserIds && parsedUserIds.length) {
                             for (let j = 0; j < parsedUserIds.length; j++) {
-                                const parsedUserId: any = parsedUserIds[j];
+                                const parsedUserId = parsedUserIds[j];
 
                                 if (parsedUserId !== userId) {
-                                    const friendInfo = await UserModel.findByPk(parsedUserId, { attributes: ["id", "firstName", "thirdName", "avatarUrl"] });
+                                    const friendInfo = await UserModel.findOne({ 
+                                        where: {
+                                            id: parsedUserId
+                                        },
+                                        attributes: ["id", "firstName", "thirdName", "avatarUrl"] 
+                                    });
 
                                     if (friendInfo) {
-                                        dialog.userTo = friendInfo;
+                                        chatObject.userTo = friendInfo;
                                     }
                                 }
                             }
                         }
                     }
 
-                    dialog.userFrom = {
-                        id: dialog.userId,
-                        firstName: dialog.first_name,
-                        thirdName: dialog.third_name,
-                        avatarUrl: dialog.avatarUrl,
-                    };
-                    
-                    delete dialog.userId;
-                    delete dialog.first_name;
-                    delete dialog.third_name;
-                    delete dialog.avatarUrl;
+                    // Получаем последнее сообщение для диалога
+                    const topMessage = await MessagesModel.findOne({
+                        where: { chatId: chat.id },
+                        limit: 1,
+                        order: [["createDate", "DESC"]]
+                    });
 
-                    updatedDialogs.push(dialog);
-                }
+                    if (topMessage) {
+                        const files: IFile[] = [];
+                        let callObject: ICall | null = null;
 
-                return res.json({ success: true, dialogs: updatedDialogs.reverse(), isMore });
-            } else {
-                return new Error("Запрос выполнился некорректно и ничего не вернул (getDialogs)");
+                        // Получаем автора сообщения
+                        const userFrom = await UserModel.findOne({ 
+                            where: {
+                                id: topMessage.userId
+                            },
+                            attributes: ["id", "firstName", "thirdName", "avatarUrl"] 
+                        });
+
+                        if (userFrom) {
+                            chatObject.userFrom = userFrom;
+                        }
+
+                        // Получаем объект звонка
+                        if (topMessage.callId) {
+                            const call = await CallsModel.findByPk(topMessage.callId, { attributes: ["initiatorId"] });
+
+                            if (call) {
+                                callObject = call;
+                            }
+                        }
+
+                        // Получаем объект файла
+                        if (topMessage.files) {
+                            const filesIds = (topMessage.files as string).split(",");
+
+                            for (let fileId of filesIds) {
+                                const file = await FilesModel.findByPk(fileId, { attributes: ["name"] });
+
+                                if (file) {
+                                    files.push(file);
+                                }
+                            }
+                        }
+
+                        // Формируем объект messageObject
+                        chatObject.messageObject = {
+                            message: topMessage.message,
+                            type: topMessage.type,
+                            call: callObject,
+                            files: files,
+                            createDate: topMessage.createDate,
+                            notifyWrite: ""
+                        };
+
+                        updatedChats.push(chatObject);
+                    }
+                };
             }
+
+            const dialogs = updatedChats && updatedChats.length
+                ? updatedChats.length > LIMIT
+                    ? updatedChats.slice(0, LIMIT)
+                    : updatedChats
+                : [];
+            const isMore = Boolean(updatedChats && updatedChats.length > LIMIT);
+
+            return res.json({ 
+                success: true, 
+                dialogs: dialogs.sort((a, b) => Number(a.messageObject.createDate > b.messageObject.createDate)), 
+                isMore 
+            });
         } catch (error: any) {
             console.log(error);
             return res.status(HTTPStatuses.ServerError).send({ success: false, message: error.message ?? error });
@@ -99,16 +171,27 @@ class MessagesController {
     // Получить список сообщений для одиночного/группового чата
     async getMessages(req: Request, res: Response) {
         try {
-            const { chatId, page }: { chatId: string; page: number; } = req.body;
+            const { chatId, page, userId, loadMore = false, search = "" }: { chatId: string; page: number; userId: string; loadMore: boolean; search: string; } = req.body;
 
             if (!chatId) {
                 throw new Error("Не передан уникальный идентификатор чата");
             }
 
+            const prepearedSearch = search ? search.replace(/\`\'\.\,\;\:\\\//g, "\"").trim().toLowerCase() : "";
+
+            const messagesLimit = loadMore ? LOAD_MORE_LIMIT : LIMIT;
+
+            const where = {} as { search: Where };
+
+            if (prepearedSearch) {
+                where.search = sequelize.where(sequelize.fn("LOWER", sequelize.col("message")), "LIKE", `%${prepearedSearch}%`);
+            }
+
             const moreMessages = await MessagesModel.findAll({
+                where,
                 order: [["create_date", "DESC"]],
-                limit: LIMIT + 1,
-                offset: page * LIMIT,
+                limit: messagesLimit + 1,
+                offset: page * messagesLimit,
                 include: [{
                     model: ChatsModel,
                     as: "Chat",
@@ -122,8 +205,8 @@ class MessagesController {
             });
 
             const messages = moreMessages && moreMessages.length
-                ? moreMessages.length > LIMIT 
-                    ? moreMessages.slice(0, LIMIT)
+                ? moreMessages.length > messagesLimit
+                    ? moreMessages.slice(0, messagesLimit)
                     : moreMessages
                 : [];
             const isMore = Boolean(moreMessages && moreMessages.length && moreMessages.length > LIMIT);
@@ -132,7 +215,19 @@ class MessagesController {
 
             // Дополняем каждый объект сообщения объектом звонка или файлами (при наличии)
             if (messages && messages.length) {
-                for (let message of messages) {
+                for (const message of messages) {
+                    // Статус прочтенности
+                    if (message.userId !== userId) {
+                        const findReadMessage = await ReadMessagesModel.findOne({
+                            where: { messageId: message.id, userId }
+                        });
+
+                        if (findReadMessage) {
+                            (message as any).dataValues.isRead = findReadMessage.isRead;
+                        }
+                    }
+
+                    // Звонки
                     if (message.callId) {
                         const call = await CallsModel.findByPk(message.callId);
 
@@ -141,6 +236,7 @@ class MessagesController {
                         }
                     }
 
+                    // Файлы
                     if (message.files) {
                         const filesIds = (message.files as string).split(",");
                         const files: IFile[] = [];
@@ -182,20 +278,37 @@ class MessagesController {
                 throw "Не передан уникальный идентификатор чата";
             }
 
-            // Если чат - одиночный, то проверяем наличие чата и если его нет - создаем его
+            // Если чат - одиночный:
+            // 1) Проверяем наличие чата и если его нет - создаем его
             if (isSingleChat) {
                 const chat = await ChatsModel.findOne({
                     where: { id: message.chatId },
                     transaction
                 });
-    
+
                 if (!chat) {
-                    await ChatsModel.create({ id: message.chatId, userIds: `${message.userId},${userTo}` }, { transaction });
+                    const userFromObject = await UserModel.findByPk(message.userId, { attributes: ["firstName", "thirdName"], transaction });
+                    const userToObject = await UserModel.findByPk(userTo, { attributes: ["firstName", "thirdName"], transaction });
+
+                    if (userFromObject && userToObject) {
+                        await ChatsModel.create({ 
+                            id: message.chatId, 
+                            userIds: `${message.userId},${userTo}`, 
+                            name: `${userFromObject.firstName + " " + userFromObject.thirdName},${userToObject.firstName + " " + userToObject.thirdName}` 
+                        }, { transaction });
+                    }
                 }
             }
 
             // Сохраняем сообщение в таблицу Messages
             await MessagesModel.create({ ...message }, { transaction });
+
+            // Если чат - одиночный (пришлось вынести, так как ругается на несуществующую связь с Messages - так как записи еще нет, поэтому вынес ниже создания Message):
+            // 2) Создаем непрочитанное сообщение для одного пользователя, иначе для каждого пользователя в чате
+            if (isSingleChat) {
+                // При создании сообщения по умолчанию создаем запись в Read_messages в значении false
+                await ReadMessagesModel.create({ id: uuid(), userId: userTo, messageId: message.id, isRead: message.isRead }, { transaction });
+            }
 
             await transaction.commit();
 
@@ -208,22 +321,30 @@ class MessagesController {
     };
 
     // Читаем сообщение (сообщения)
-    // TODO
-    // Реализовать прочтение сообщений
     async readMessage(req: Request, res: Response) {
+        const transaction = await sequelize.transaction();
+
         try {
-            const { ids }: { ids: string[] } = req.body;
+            const { ids, userId }: { ids: string[]; userId: string; } = req.body;
 
             if (ids && ids.length) {
                 await MessagesModel.update(
-                    { isRead: MessageReadStatus.READ }, 
-                    { where: { id: { [Op.in]: ids } } }
+                    { isRead: MessageReadStatus.READ },
+                    { where: { id: { [Op.in]: ids } }, transaction }
+                );
+
+                await ReadMessagesModel.update(
+                    { isRead: MessageReadStatus.READ },
+                    { where: { messageId: { [Op.in]: ids }, userId }, transaction }
                 );
             }
+
+            await transaction.commit();
 
             return res.json({ success: true });
         } catch (error: any) {
             console.log(error);
+            await transaction.rollback();
             return res.status(HTTPStatuses.ServerError).send({ success: false, message: error.message ?? error });
         }
     };
@@ -242,19 +363,42 @@ class MessagesController {
             }
 
             const chat = await ChatsModel.findOne({
-                where: { 
-                    name: null, 
-                    userIds: { 
+                where: {
+                    userIds: {
                         [Op.or]: [
                             { [Op.like]: `${userId},${friendId}` },
                             { [Op.like]: `${friendId},${userId}` }
                         ]
-                    } 
+                    }
                 },
                 attributes: ["id"]
             });
 
             return res.json({ success: true, chatId: chat ? chat.id : null });
+        } catch (error: any) {
+            console.log(error);
+            return res.status(HTTPStatuses.ServerError).send({ success: false, message: error.message ?? error });
+        }
+    };
+
+    // Получаем количество непрочитанных сообщений в диалогах
+    async getMessageNotification(req: Request, res: Response) {
+        try {
+            const { userId }: { userId: string; } = req.body;
+
+            if (!userId) {
+                throw "Не передан Ваш уникальный идентификатор";
+            }
+
+            const unreadChatIds = await sequelize.query(`
+                SELECT ms.chat_id
+                FROM Read_Messages as rm
+                JOIN Messages as ms ON ms.id = rm.message_id
+                WHERE rm.is_read = 0 and rm.user_id = '${userId}'
+                GROUP BY ms.chat_id
+            `) as [{ "chat_id": string }[], number];
+
+            return res.json({ success: true, unreadChatIds: unreadChatIds[0] && unreadChatIds[0].length ? unreadChatIds[0].map(unreadChatId => unreadChatId.chat_id) : [] });
         } catch (error: any) {
             console.log(error);
             return res.status(HTTPStatuses.ServerError).send({ success: false, message: error.message ?? error });
@@ -270,4 +414,5 @@ export default function MessagesRouter(app: Express) {
     app.post(ApiRoutes.saveMessage, mustAuthenticated, messagesController.saveMessage);
     app.post(ApiRoutes.readMessage, mustAuthenticated, messagesController.readMessage);
     app.post(ApiRoutes.getChatId, mustAuthenticated, messagesController.getChatId);
+    app.post(ApiRoutes.getMessageNotification, mustAuthenticated, messagesController.getMessageNotification);
 };

@@ -8,6 +8,7 @@ import { ApiRoutes, HTTPStatuses } from "../../types/enums";
 import FilesModel from "../database/models/files";
 import { sequelize } from "../database";
 import { mustAuthenticated } from "../middlewares";
+import UserDetailModel from "../database/models/user_details";
 
 // enum FileExtensions {
 //     png = ".png",
@@ -128,6 +129,42 @@ class FileController {
         }
     };
 
+    // Сохраняем файлы (req.files) в таблице UserDetails в поле photos
+    async addNewPhotos(req: Request, res: Response) {
+        const transaction = await sequelize.transaction();
+
+        try {
+            if (req.files) {
+                const files = req.files as Express.Multer.File[];
+                const { userId } = req.body;
+
+                if (files && files.length) {
+                    const prepFiles = files.map(file => file.path.slice(6)).join(",");
+
+                    const userDetails = await UserDetailModel.findOne({
+                        where: { userId },
+                        transaction
+                    });
+
+                    if (userDetails) {
+                        userDetails.photos = userDetails.photos ? userDetails.photos + "," + prepFiles : prepFiles;
+                        userDetails.save();
+                    }
+
+                    await transaction.commit();
+
+                    return res.json({ success: true, photos: prepFiles });
+                }
+            } else {
+                throw "Не переданы файлы";
+            }
+        } catch (error: any) {
+            console.log(error);
+            await transaction.rollback();
+            return res.status(HTTPStatuses.ServerError).send({ success: false, message: error.message ?? error });
+        }
+    };
+
     // Открываем файл при клике на него
     async openFile(req: Request, res: Response) {
         try {
@@ -170,8 +207,10 @@ class FileController {
 const fileController = new FileController();
 
 export default function FileRouter(app: Express) {
-    app.post(ApiRoutes.uploadImage, mustAuthenticated, fileController.uploader.single("avatar"), fileController.uploadImage);
+    app.post(ApiRoutes.uploadImage, fileController.uploader.single("avatar"), fileController.uploadImage);
+    app.post(ApiRoutes.uploadImageAuth, mustAuthenticated, fileController.uploader.single("avatar"), fileController.uploadImage);
     app.post(ApiRoutes.saveFiles, mustAuthenticated, fileController.uploader.array("file"), fileController.saveFiles);
+    app.post(ApiRoutes.addNewPhotos, mustAuthenticated, fileController.uploader.array("photo"), fileController.addNewPhotos);
     app.post(ApiRoutes.openFile, mustAuthenticated, fileController.openFile);
     app.get(ApiRoutes.downloadFile, mustAuthenticated, fileController.downloadFile);
 };

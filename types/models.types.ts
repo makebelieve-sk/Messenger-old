@@ -22,6 +22,7 @@ export interface IUserDetails {
     city: string;
     work: string;
     sex: string;
+    photos: string;
 };
 
 // Интерфейс атрибутов модели Friends
@@ -48,9 +49,9 @@ export interface IMessage {
     type: MessageTypes;
     createDate: string;
     message: string;
-    isRead: MessageReadStatus;
     fileExt?: FileVarieties;
     callId?: string | null;
+    isRead: number;
     // Модель чата
     Chat?: { id: string; };
     // Модель пользователя (кто отправитель сообщения)
@@ -88,4 +89,12 @@ export interface IFile {
     name: string;
     size: number;
     path: string;
+};
+
+// Интерфейс атрибутов модели ReadMessages
+export interface IReadMessages {
+    id: string;
+    userId: string;
+    messageId: string;
+    isRead: number;
 };

@@ -1,5 +1,4 @@
 import { Action, ThunkAction } from "@reduxjs/toolkit";
-import { ITempChatId } from "../components/friends-module/friends-list";
 import { CallStatus } from "./enums";
 import { IDialog } from "../pages/messages";
 import { IChatInfo, IFriendInfo } from "../pages/messages/[id]";
@@ -7,6 +6,7 @@ import store from "../state/store";
 import { IMessage, IUser, IUserDetails } from "./models.types";
 import { ICallData } from "./socket.types";
 import { IImage } from "../components/messages-module/image-message";
+import { ITempChatId } from "../components/friends-module/content/friends-list";
 
 export type InitialStateType = {
     user: IUser | null;
@@ -19,15 +19,15 @@ export type InitialStateType = {
     topFriends: IUser[] | null;
     possibleUsers: IUser[] | null;
     friendNotification: number;
-    friendTab: number;
     globalUserLoading: boolean;
     globalCall: null | ICallData;
     imagesInCarousel: { images: IImage[]; index: number; } | null;
+    messageNotification: string[];
     dialogs: IDialog[];
     messages: IMessage[];
     tempChats: { [chatId: string]: Omit<ITempChatId, "chatId"> };
     counter: number;
-    visibleUnReadMessages: string;
+    visibleUnReadMessages: string | { unreadMessages: boolean; messageId: string; };
     visible: boolean;
     status: CallStatus;
     callId: string | null;
@@ -35,6 +35,12 @@ export type InitialStateType = {
     chatInfo: IChatInfo | null;
     users: IFriendInfo[] | null;
     isWrite: boolean;
+    scrollDownAfterNewMsg: boolean;
+    activeChatId: null | string;
+    onlineUsers: IUser[];
+    searchValue: string;
+    photosCount: number;
+    modalConfirm: { text: string; btnActionTitle: string; cb: Function;} | null;
 };
 
 export interface ICallSettings {

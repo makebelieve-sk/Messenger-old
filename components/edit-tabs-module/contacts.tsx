@@ -1,8 +1,8 @@
 import React from "react";
-import { TextField } from "@mui/material";
+import TextField from "@mui/material/TextField";
 import { ITabModule } from ".";
 
-export default function Contacts({ formValues, formErrors, onChange }: ITabModule) {
+export default React.memo(function Contacts({ formValues, formErrors, onChange }: ITabModule) {
     const onChangeField = (field: string, value: string | boolean | Date | null) => onChange(field, value);
 
     return <>
@@ -54,4 +54,4 @@ export default function Contacts({ formValues, formErrors, onChange }: ITabModul
             onChange={e => onChangeField("email", e.target.value)}
         />
     </>
-};
+});

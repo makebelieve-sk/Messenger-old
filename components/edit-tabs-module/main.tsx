@@ -1,13 +1,17 @@
 import React from "react";
 import "dayjs/locale/ru";
-import { FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
+import TextField from "@mui/material/TextField";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { ITabModule } from ".";
 
 import styles from "./edit-tab.module.scss";
 
-export default function Main({ formValues, formErrors, onChange }: ITabModule) {
+export default React.memo(function Main({ formValues, formErrors, onChange }: ITabModule) {
     const onChangeField = (field: string, value: string | boolean | Date | null) => {
         onChange(field, value);
     };
@@ -89,4 +93,4 @@ export default function Main({ formValues, formErrors, onChange }: ITabModule) {
             onChange={e => onChangeField("work", e.target.value)}
         />
     </>
-};
+});

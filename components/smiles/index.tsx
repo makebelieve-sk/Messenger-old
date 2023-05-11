@@ -10,6 +10,9 @@ interface ISmilesComponent {
     fromFiles?: boolean;
 };
 
+// TODO
+// Постараться посмотреть как сделано на работе (подгрузка смайликов слишком долгая, нужно быстрее)
+
 export const SmilesComponent = React.memo(React.forwardRef(({ fromFiles = false }: ISmilesComponent, inputRef: any) => {
     const [anchorEmoji, setAnchorEmoji] = React.useState<SVGSVGElement | null>(null);
 

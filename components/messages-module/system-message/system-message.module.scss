@@ -1,5 +1,4 @@
 @import "styles/colors";
-
 .system-message-container {
     width: 100%;
     padding: 5px 20px;
@@ -8,6 +7,9 @@
     color: $medium-grey;
     background: $white;
     z-index: 6;
+    &__mt-0 {
+        margin-top: 0;
+    }
 }
 
 .hidden-element {

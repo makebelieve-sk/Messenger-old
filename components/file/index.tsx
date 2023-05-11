@@ -1,6 +1,9 @@
 import React from "react";
 import { useRouter } from "next/router";
-import { IconButton, Menu, MenuItem, Tooltip } from "@mui/material";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Tooltip from "@mui/material/Tooltip";
+import IconButton from "@mui/material/IconButton";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import ScreenRotationAltIcon from "@mui/icons-material/ScreenRotationAlt";

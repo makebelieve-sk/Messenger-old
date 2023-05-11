@@ -1,5 +1,8 @@
 import { Sequelize } from "sequelize";
 
+// TODO
+// Вынести важные строки в переменные env
+
 // Инициализация sequelize
 const sequelize = new Sequelize("VK_CLONE", "Alexey", "2efbHU89!", {
   dialect: "mssql",
@@ -7,7 +10,8 @@ const sequelize = new Sequelize("VK_CLONE", "Alexey", "2efbHU89!", {
   define: {
     freezeTableName: true,
     timestamps: false
-  }
+  },
+  logging: false
 });
 
 // Соединение с бд

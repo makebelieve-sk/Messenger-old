@@ -7,7 +7,7 @@ interface IStatus {
     type: string;
 };
 
-export default function Status({ status, type }: IStatus) {
+export default React.memo(function Status({ status, type }: IStatus) {
     const [time, setTime] = React.useState({ min: 0, sec: 0 });
 
     const timer = React.useRef<any | null>(null);
@@ -48,4 +48,4 @@ export default function Status({ status, type }: IStatus) {
         default:
             return null;
     }
-};
+});

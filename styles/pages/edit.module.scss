@@ -12,8 +12,12 @@
     &__module {
         width: 80%;
         padding: 0 20px;
-    }
-    &__module__spinner {
-        margin-top: 10px;
+        &__loading-button {
+            margin-top: 12px;
+            margin-bottom: 12px;
+        }
+        &__spinner {
+            margin-top: 10px;
+        }
     }
 }

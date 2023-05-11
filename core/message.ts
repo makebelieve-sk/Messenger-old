@@ -2,7 +2,7 @@ import { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 import { NextRouter } from "next/router";
 import { IFriendInfo } from "../pages/messages/[id]";
-import { deleteFromTempChat, setMessage } from "../state/messages/slice";
+import { changeLastMessageInDialog, deleteFromTempChat, setMessage } from "../state/messages/slice";
 import { ApiRoutes, SocketActions } from "../types/enums";
 import { IFile, IMessage } from "../types/models.types";
 import { AppDispatch } from "../types/redux.types";
@@ -55,6 +55,8 @@ export default class Message {
     // Отправка по сокету
     sendBySocket() {
         this.socket.emit(SocketActions.MESSAGE, { data: this.message, friendId: this.friendInfo.id });
+        // Обновляем последнее сообщение в диалогах
+        this.dispatch(changeLastMessageInDialog(this.message));
     };
 
     // Сохранение файлов в базе данных
@@ -62,7 +64,7 @@ export default class Message {
         const formData = new FormData();
 
         files.forEach(file => {
-            formData.append("file", file as any);
+            formData.append("file", file);
         });
 
         Request.post(

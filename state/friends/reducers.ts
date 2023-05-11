@@ -18,4 +18,7 @@ export default {
     setPossibleUsers: (state: FreindsType, action: PayloadAction<IUser[] | null>) => {
         state.possibleUsers = action.payload;
     },
+    setSearchValue: (state: FreindsType, action: PayloadAction<string>) => {
+        state.searchValue = action.payload;
+    },
 };

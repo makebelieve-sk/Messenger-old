@@ -2,24 +2,30 @@ import React from "react";
 import { ActionCreatorWithPayload } from "@reduxjs/toolkit";
 import { useRouter } from "next/router";
 import { v4 as uuid } from "uuid";
-import { Avatar, Button, List, ListItem, ListItemAvatar, ListItemText, Chip, Box, TextField, Tabs, Tab, Badge, Popover, Typography } from "@mui/material";
+import ListItem from "@mui/material/ListItem";
+import ListItemAvatar from "@mui/material/ListItemAvatar";
+import ListItemText from "@mui/material/ListItemText";
+import Popover from "@mui/material/Popover";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import AddIcon from "@mui/icons-material/Add";
 import DoneIcon from "@mui/icons-material/Done";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
-import { IUser } from "../../types/models.types";
-import { ApiRoutes, FriendsTab, Pages, SocketActions } from "../../types/enums";
-import Request from "../../core/request";
-import CatchErrors from "../../core/catch-errors";
-import { selectFriendState, setFriends, setPossibleUsers } from "../../state/friends/slice";
-import { selectMainState, setFriendNotification, setFriendTab } from "../../state/main/slice";
-import { selectMessagesState, setTempChat } from "../../state/messages/slice";
-import { useAppDispatch, useAppSelector } from "../../hooks/useGlobalState";
-import { SocketIOClient } from "../socket-io-provider";
-import { NO_PHOTO } from "../../common";
-import { skeletonsPossibleFriends } from "../../pages/friends";
+import { useAppDispatch, useAppSelector } from "../../../../hooks/useGlobalState";
+import { selectFriendState, setFriends, setPossibleUsers } from "../../../../state/friends/slice";
+import { selectMainState, setFriendNotification } from "../../../../state/main/slice";
+import { selectMessagesState, setTempChat } from "../../../../state/messages/slice";
+import { IUser } from "../../../../types/models.types";
+import { SocketIOClient } from "../../../socket-io-provider";
+import AvatarWithBadge from "../../../avatarWithBadge";
+import { NO_PHOTO } from "../../../../common";
+import { ApiRoutes, FriendsNoticeTypes, FriendsTab, Pages, SocketActions } from "../../../../types/enums";
+import CatchErrors from "../../../../core/catch-errors";
+import Request from "../../../../core/request";
 
-import styles from "./friends.module.scss";
+import styles from "./friends-list.module.scss";
 
 export interface ITempChatId {
     chatId: string;
@@ -28,26 +34,19 @@ export interface ITempChatId {
 };
 
 interface IFriendsList {
-    mainTab: number;
     friends: IUser[] | null;
     userId?: string | null;
-    loadingContent: boolean;
+    friendTab: number;
     onChangeMainTab: (tab: number) => void;
 };
 
-export enum MainFriendTabs {
-    allFriends = 0,
-    allRequests = 1,
-    search = 2,
-};
-
-export default function FriendsList({ mainTab, friends, userId, loadingContent, onChangeMainTab }: IFriendsList) {
+export default React.memo(function FriendsList({ friends, userId, friendTab, onChangeMainTab }: IFriendsList) {
     const [anchorEl, setAnchorEl] = React.useState<HTMLOrSVGElement | null | any>(null);
     const [isAdded, setIsAdded] = React.useState("");
     const [loading, setLoading] = React.useState(false);
 
     const { possibleUsers } = useAppSelector(selectFriendState);
-    const { friendNotification, friendTab } = useAppSelector(selectMainState);
+    const { onlineUsers } = useAppSelector(selectMainState);
     const { tempChats } = useAppSelector(selectMessagesState);
 
     const router = useRouter();
@@ -100,67 +99,6 @@ export default function FriendsList({ mainTab, friends, userId, loadingContent, 
         }
     };
 
-    // Отрисовка вкладок
-    const renderTabs = (mainTab: number) => {
-        const tabsArray: JSX.Element[] = [];
-
-        switch (mainTab) {
-            case MainFriendTabs.allFriends:
-                tabsArray.push(<Tab
-                    key={FriendsTab.all}
-                    label="Все друзья"
-                    value={FriendsTab.all}
-                    id="friends"
-                    aria-controls="friends"
-                    className={styles["friends-list-container__tab"] + " label-tab"}
-                />);
-                tabsArray.push(<Tab
-                    key={FriendsTab.online}
-                    label="Друзья онлайн"
-                    value={FriendsTab.online}
-                    id="friends-online"
-                    aria-controls="friends-online"
-                    className={styles["friends-list-container__tab"] + " label-tab"}
-                />);
-                tabsArray.push(<Tab
-                    key={FriendsTab.subscribers}
-                    label="Подписчики"
-                    value={FriendsTab.subscribers}
-                    id="subscribers"
-                    aria-controls="subscribers"
-                    className={styles["friends-list-container__tab"] + " label-tab"}
-                />);
-                break;
-            case MainFriendTabs.allRequests:
-                const labelWithNotifications = friendNotification
-                    ? <Badge color="primary" badgeContent=" " variant="dot">Заявки в друзья</Badge>
-                    : "Заявки в друзья";
-
-                tabsArray.push(<Tab
-                    key={FriendsTab.friendRequests}
-                    label={labelWithNotifications}
-                    value={FriendsTab.friendRequests}
-                    id="friend-requests"
-                    aria-controls="friend-requests"
-                    className={styles["friends-list-container__tab"] + " label-tab"}
-                />);
-                tabsArray.push(<Tab
-                    key={FriendsTab.incomingRequests}
-                    label="Исходящие заявки"
-                    value={FriendsTab.incomingRequests}
-                    id="incoming-requests"
-                    aria-controls="incoming-requests"
-                    className={styles["friends-list-container__tab"] + " label-tab"}
-                />);
-                break;
-            case MainFriendTabs.search:
-            default:
-                break;
-        }
-
-        return tabsArray;
-    };
-
     // Отправка сообщения другу
     const writeMessage = (friend: IUser | null) => {
         if (friend && friend.id && userId) {
@@ -200,11 +138,14 @@ export default function FriendsList({ mainTab, friends, userId, loadingContent, 
                 (data: { success: boolean, chatId: string }) => {
                     const chatId = data.chatId ? data.chatId : uuid();
 
-                    dispatch(setTempChat({ chatId, userFrom: userId, userTo: friend.id }));
-                    onWrite(chatId);
+                    if (!data.chatId) {
+                        dispatch(setTempChat({ chatId, userFrom: userId, userTo: friend.id }));
+                        
+                        // Отправляем временный chatId по сокету на сервер (случай, если два пользователя впервые (без истории сообщений) открыли чат для друг друга)
+                        if (socket) socket.emit(SocketActions.SET_TEMP_CHAT_ID, { chatId, userFrom: userId, userTo: friend.id } as ITempChatId);
+                    }
 
-                    // Отправляем временный chatId по сокету на сервер (случай, если два пользователя впервые (без истории сообщений) открыли чат для друг друга)
-                    if (socket) socket.emit(SocketActions.SET_TEMP_CHAT_ID, { chatId, userFrom: userId, userTo: friend.id } as ITempChatId);
+                    onWrite(chatId);
                 },
                 (error: any) => CatchErrors.catch(error, router, dispatch)
             );
@@ -213,6 +154,7 @@ export default function FriendsList({ mainTab, friends, userId, loadingContent, 
         }
     };
 
+    // Отрисовка контента вкладки
     const renderItemSecondary = (tab: number, friend: IUser | null = null) => {
         const friendId = friend && friend.id ? friend.id : null;
 
@@ -261,7 +203,7 @@ export default function FriendsList({ mainTab, friends, userId, loadingContent, 
                             undefined,
                             friends,
                             undefined,
-                            () => dispatch(setFriendNotification(friendNotification - 1))
+                            () => dispatch(setFriendNotification(FriendsNoticeTypes.REMOVE))
                         )}
                     >
                         Принять
@@ -277,7 +219,7 @@ export default function FriendsList({ mainTab, friends, userId, loadingContent, 
                             undefined,
                             friends,
                             undefined,
-                            () => dispatch(setFriendNotification(friendNotification - 1))
+                            () => dispatch(setFriendNotification(FriendsNoticeTypes.REMOVE))
                         )}
                     >
                         Оставить в подписчиках
@@ -313,7 +255,14 @@ export default function FriendsList({ mainTab, friends, userId, loadingContent, 
                             />
                             : <span
                                 className={styles["friends-list-container__item__add-block"]}
-                                onClick={_ => onButtonAction(friendId, ApiRoutes.addToFriend, SocketActions.ADD_TO_FRIENDS, possibleUsers, setPossibleUsers, () => setIsAdded(friendId ? friendId : ""))}
+                                onClick={_ => onButtonAction(
+                                    friendId,
+                                    ApiRoutes.addToFriend,
+                                    SocketActions.ADD_TO_FRIENDS,
+                                    possibleUsers,
+                                    setPossibleUsers,
+                                    () => setIsAdded(friendId ? friendId : "")
+                                )}
                             >
                                 <AddIcon className={styles["friends-list-container__item__add-icon"]} />
                                 <span className={styles["friends-list-container__item__add-to-friend"]}>Добавить в друзья</span>
@@ -329,88 +278,63 @@ export default function FriendsList({ mainTab, friends, userId, loadingContent, 
     };
 
     return <>
-        {renderTabs(mainTab) && renderTabs(mainTab).length
-            ? <Box className={styles["friends-list-container__tabs"]}>
-                <Tabs value={friendTab} onChange={(_, newValue) => dispatch(setFriendTab(newValue))} aria-label="friends-tabs">
-                    {renderTabs(mainTab).map(tab => tab)}
-                </Tabs>
-            </Box>
-            : null
-        }
+        {
+            friends && friends.length
+                ? friends.map(friend => {
+                    const userName = friend.firstName + " " + friend.thirdName;
 
-        <TextField
-            id="standard-input"
-            label="Поиск"
-            variant="standard"
-            fullWidth
-            className={styles["friends-list-container__search"]}
-            size="small"
-        />
-
-        <List className={styles["friends-list-container__list"]}>
-            {loadingContent
-                ? skeletonsPossibleFriends.map((skeleton, index) => {
-                    return <div
-                        key={"friends-list-container " + index}
-                        className={styles["skeleton-container__row"] + " " + styles["friends-list-container__skeleton-container"]}
-                    >
-                        {skeleton}
-                    </div>
-                })
-                : friends && friends.length
-                    ? friends.map(friend => {
-                        const userName = friend.firstName + " " + friend.thirdName;
-
-                        return <ListItem className={styles["friends-list-container__item"]} key={friend.id}>
-                            <ListItemAvatar className={styles["friends-list-container__item__avatar-block"]}>
-                                <Avatar
-                                    alt={userName}
-                                    src={friend.avatarUrl ? friend.avatarUrl : NO_PHOTO}
-                                    className={styles["friends-list-container__item__avatar"]}
-                                />
-                            </ListItemAvatar>
-
-                            <ListItemText
-                                className={styles["friends-list-container__item__user-name"]}
-                                primary={userName}
-                                disableTypography={true}
-                                secondary={renderItemSecondary(friendTab, friend)?.component}
+                    return <ListItem className={styles["friends-list-container__item"]} key={friend.id}>
+                        <ListItemAvatar className={styles["friends-list-container__item__avatar-block"]}>
+                            <AvatarWithBadge
+                                isOnline={Boolean(onlineUsers.find(onlineUser => onlineUser.id === friend.id))}
+                                chatAvatar={friend.avatarUrl ? friend.avatarUrl : NO_PHOTO}
+                                alt={userName}
+                                avatarClassName="friends-list-container__item__avatar"
+                                size={80}
+                                pushLeft={true}
                             />
+                        </ListItemAvatar>
 
-                            {friendTab === FriendsTab.all || friendTab === FriendsTab.online
-                                ? <>
-                                    <MoreHorizIcon
-                                        sx={{ cursor: "pointer" }}
-                                        aria-describedby={popoverId}
-                                        onClick={event => setAnchorEl(event.currentTarget)}
-                                    />
-                                    <Popover
-                                        id={popoverId}
-                                        open={Boolean(anchorEl)}
-                                        anchorEl={anchorEl}
-                                        onClose={() => setAnchorEl(null)}
-                                        anchorOrigin={{
-                                            vertical: "bottom",
-                                            horizontal: "left",
-                                        }}
+                        <ListItemText
+                            className={styles["friends-list-container__item__user-name"]}
+                            primary={userName}
+                            disableTypography={true}
+                            secondary={renderItemSecondary(friendTab, friend)?.component}
+                        />
+
+                        {friendTab === FriendsTab.all || friendTab === FriendsTab.online
+                            ? <>
+                                <MoreHorizIcon
+                                    className={styles["friends-list-container__item__popover-icon"]}
+                                    aria-describedby={popoverId}
+                                    onClick={event => setAnchorEl(event.currentTarget)}
+                                />
+                                <Popover
+                                    id={popoverId}
+                                    open={Boolean(anchorEl)}
+                                    anchorEl={anchorEl}
+                                    onClose={() => setAnchorEl(null)}
+                                    anchorOrigin={{
+                                        vertical: "bottom",
+                                        horizontal: "left",
+                                    }}
+                                >
+                                    <Typography
+                                        className={styles["friends-list-container__item__popover-icon__delete"]}
+                                        onClick={_ => onButtonAction(friend.id, ApiRoutes.deleteFriend, undefined, friends, setFriends, () => setAnchorEl(null))}
                                     >
-                                        <Typography
-                                            sx={{ p: 2, cursor: "pointer", fontSize: 14 }}
-                                            onClick={_ => onButtonAction(friend.id, ApiRoutes.deleteFriend)}
-                                        >
-                                            Удалить из друзей
-                                        </Typography>
-                                    </Popover>
-                                </>
-                                : null
-                            }
-                        </ListItem>
-                    })
-                    : <div className={styles["friends-list-container__no-friends"]}>
-                        <div className="opacity-text">{renderItemSecondary(friendTab)?.nonText}</div>
-                        {renderItemSecondary(friendTab)?.button}
-                    </div>
-            }
-        </List>
+                                        Удалить из друзей
+                                    </Typography>
+                                </Popover>
+                            </>
+                            : null
+                        }
+                    </ListItem>
+                })
+                : <div className={styles["friends-list-container__no-friends"]}>
+                    <div className="opacity-text">{renderItemSecondary(friendTab)?.nonText}</div>
+                    {renderItemSecondary(friendTab)?.button}
+                </div>
+        }
     </>
-};
+});

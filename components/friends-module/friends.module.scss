@@ -1,116 +1,37 @@
 @import "styles/colors";
-
-.friends-list-container__tabs {
-    margin-bottom: 10px;
-    .friends-list-container__tab {
-        padding: 10px 20px;
-    }
-}
-.friends-list-container__search {
-    margin-bottom: 20px;
-}
-.friends-list-container__list {
-    width: 100%;
-    padding: 0;
-    .friends-list-container__skeleton-container {
-        margin-bottom: 10px;
-        &:last-child {
-            margin-bottom: 0;
-        }
-    }
-    .friends-list-container__item {
-        padding-bottom: 20px;
-        border-bottom: 1px solid $light-grey;
-        color: $blue;
-        display: flex;
-        align-items: flex-start;
-        &:last-child {
-            padding-bottom: 0;
-            border-bottom: none;
-        }
-        &__avatar-block {
-            width: 95px;
-            min-width: 95px;
-            height: 80px;
-            min-height: 80px;
-            &:hover {
-                cursor: pointer;
-            }
-        }
-        &__avatar {
-            width: 80px;
-            height: 80px;
-        }
-        &__user-name {
+@import "styles/variables";
+.content-container {
+    height: calc(100vh - $calcHeight1);
+    .skeleton-container {
+        width: 100%;
+        &__row {
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            font-size: 13px;
-            font-weight: 700;;
-            span {
-                color: $blue;
-                font-size: 13px;
-                font-weight: 400;
-            }
-        }
-        &__write-message {
-            margin-top: 10px;
-            &:hover {
-                cursor: pointer;
-            }
-        }
-        &__accept-block {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            &:hover {
-                text-decoration: none;
-            }
-        }
-        &__action {
-            font-size: 12px;
-            margin-top: 10px;
-        }
-        &__add-block {
-            display: flex;
-            width: 100%;
+            justify-content: space-between;
             align-items: center;
-            color: $blue;
-            &:hover {
-                cursor: pointer;
-                text-decoration: underline;
+            width: 100%;
+        }
+        &__text {
+            width: 45%;
+            margin-right: 10px;
+            height: 38px;
+            &:last-child {
+                margin-right: 0;
             }
         }
-        &__add-icon {
-            height: 20px;
-            width: 20px;
+        &__input {
+            width: 100%;
+            height: 30px;
         }
-        &__add-to-friend {
-            font-size: 14px;
-            font-weight: 400;
+        &__block {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            width: 100%;
         }
-        &__wrap {
-            margin-top: 10px;
-        }
-        &__chip-icon {
-            width: 20px;
-            height: 20px;
-        }
-        &__chip {
-            font-size: 12px;
-        }
-    }
-    .friends-list-container__no-friends {
-        color: $light-grey;
-        font-size: 14px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        &__button {
-            font-size: 12px;
-            margin-top: 10px;
+        &__img {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
         }
     }
 }

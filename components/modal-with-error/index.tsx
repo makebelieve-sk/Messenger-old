@@ -1,6 +1,10 @@
 import React from "react";
 import { useRouter } from "next/router";
-import { Alert, Box, Button, Modal, Typography } from "@mui/material";
+import Alert from "@mui/material/Alert";
+import Modal from "@mui/material/Modal";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SnackBarComponent from "../snackbar";
 import { useAppDispatch, useAppSelector } from "../../hooks/useGlobalState";
@@ -12,7 +16,7 @@ import styles from "./modal-with-error.module.scss";
 const modalTitle = "modal-error-title";
 const modalDescription = "modal-error-description";
 
-export default function ModalWithError() {
+export default React.memo(function ModalWithError() {
     const [open, setOpen] = React.useState(true);
     const [visible, setVisible] = React.useState(false);
 
@@ -39,7 +43,7 @@ export default function ModalWithError() {
 
     return <>
         <SnackBarComponent anchor={{ vertical: "top", horizontal: "center" }} open={visible} handleClose={() => setVisible(false)}>
-            <Alert onClose={() => setVisible(false)} severity="success" sx={{ width: "100%" }}>
+            <Alert className={styles["alert-error-container"]} onClose={() => setVisible(false)} severity="success">
                 Текст успешно скопирован в буфер обмена!
             </Alert>
         </SnackBarComponent>
@@ -50,7 +54,7 @@ export default function ModalWithError() {
                     Упс! Возникла ошибка в работе сервера
                 </Typography>
 
-                <Typography id={modalDescription} sx={{ mt: 2 }}>
+                <Typography id={modalDescription} className={styles["modal-error-container__text"]}>
                     Пожалуйста, скопируйте текст ошибки и отправьте её на почту разработчикам: skryabin.aleksey99@gmail.com
                 </Typography>
 
@@ -58,10 +62,10 @@ export default function ModalWithError() {
                     {error}
                 </div>
 
-                <Typography id={modalDescription} sx={{ mt: 4 }} align="right">
+                <Typography id={modalDescription} align="right" className={styles["modal-error-container__button"]}>
                     <Button variant="outlined" startIcon={<RefreshIcon />} onClick={router.reload}>Обновить страницу</Button>
                 </Typography>
             </Box>
         </Modal>
     </>
-};
+});

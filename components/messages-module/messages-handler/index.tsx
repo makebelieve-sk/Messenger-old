@@ -17,7 +17,7 @@ interface IMessagesHandler {
     userId: string;
 };
 
-export default function MessagesHandler({ message, userId }: IMessagesHandler) {
+export default React.memo(function MessagesHandler({ message, userId }: IMessagesHandler) {
     const router = useRouter();
     const dispatch = useAppDispatch();
 
@@ -30,7 +30,10 @@ export default function MessagesHandler({ message, userId }: IMessagesHandler) {
                 src: file.path,
                 alt: file.name,
                 id: file.id,
-                rows: files.length > 1 && index === 0 ? files.length - 1 : 1
+                rows: files.length > 1 && index === 0 ? files.length - 1 : 1,
+                authorName: message.User ? message.User.firstName + " " + message.User.thirdName : "",
+                authorAvatarUrl: message.User ? message.User.avatarUrl : "",
+                dateTime: message.createDate
             });
 
             return acc;
@@ -45,8 +48,11 @@ export default function MessagesHandler({ message, userId }: IMessagesHandler) {
                 ? <div className={styles["message-type__message-with-file"]}>
                     {message.fileExt && message.fileExt === FileVarieties.IMAGES
                         ? <>
-                            <ImageMessage images={newImage([message.files[0] as IFile])} showBottomRadius={true} />
-                            <div className={styles["message-type__message-with-file__message"]}>{message.message}</div>
+                            <ImageMessage images={newImage([message.files[0] as IFile])} showBottomRadius={Boolean(message.message)} />
+                            {message.message 
+                                ? <div className={styles["message-type__message-with-file__message"]}>{message.message}</div> 
+                                : null
+                            }
                         </>
                         : <>
                             <FileComponent file={(message.files[0] as IFile)} visibleButtons={false} />
@@ -68,7 +74,7 @@ export default function MessagesHandler({ message, userId }: IMessagesHandler) {
                 : errorMessage;
         case MessageTypes.VOICE:
             return <div>
-                Иконка файла - Название файла - Размер файла
+                Иконка голосового сообщения - Голосовое сообщение - Продолжительность
             </div>;
         case MessageTypes.CALL: {
             if (message.Call) {
@@ -113,4 +119,4 @@ export default function MessagesHandler({ message, userId }: IMessagesHandler) {
             catchErrors.catch("Неизвестный тип сообщения: " + message.type, router, dispatch)
             return errorMessage;
     }
-};
+});

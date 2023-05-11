@@ -2,15 +2,20 @@ import { createSlice } from "@reduxjs/toolkit";
 import reducers from "./reducers";
 import { InitialStateType, RootState } from "../../types/redux.types";
 
-export type MainType = Pick<InitialStateType, "friendTab" | "friendNotification" | "globalUserLoading" | "globalCall" | "imagesInCarousel">;
+export type MainType = Pick<
+  InitialStateType, 
+  "modalConfirm" | "friendNotification" | "globalUserLoading" | "globalCall" | "imagesInCarousel" | "messageNotification" | "onlineUsers"
+>;
 
 // Начальное состояние
 export const initialState: MainType = {
   friendNotification: 0,
-  friendTab: 0,
+  modalConfirm: null,
   globalUserLoading: false,
   globalCall: null,
   imagesInCarousel: null,
+  messageNotification: [],
+  onlineUsers: [],
 };
 
 export const mainSlice = createSlice({
@@ -23,7 +28,16 @@ export const mainSlice = createSlice({
 export const selectMainState = (state: RootState) => state.main;
 
 // Экшены
-export const { setFriendNotification, setFriendTab, setGlobalUserLoading, setGlobalInCall, setImagesInCarousel } = mainSlice.actions;
+export const { 
+  setFriendNotification,
+  setGlobalUserLoading, 
+  setGlobalInCall, 
+  setImagesInCarousel,
+  setMessageNotification,
+  setOnlineUsers,
+  deleteOnlineUser,
+  setModalConfirm
+} = mainSlice.actions;
 
 // Редьюсер
 export default mainSlice.reducer;

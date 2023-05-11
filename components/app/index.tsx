@@ -1,6 +1,8 @@
 import React from "react";
 import { useRouter } from "next/router";
-import { Alert, CircularProgress, Snackbar } from "@mui/material";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import CircularProgress from "@mui/material/CircularProgress";
 import { ApiRoutes, Pages } from "../../types/enums";
 import { IUser } from "../../types/models.types";
 import { useAppDispatch, useAppSelector } from "../../hooks/useGlobalState";
@@ -11,6 +13,7 @@ import SnackBarWithCall from "../snackbar-with-call";
 import ModalWithError from "../modal-with-error";
 import ModalWithCall from "../modal-with-call";
 import ModalWithImagesCarousel from "../modal-with-images-carousel";
+import ModalWithConfirm from "../modal-with-confirm";
 import { selectMainState, setGlobalUserLoading } from "../../state/main/slice";
 import { selectErrorState } from "../../state/error/slice";
 import { selectUserState, setUser } from "../../state/user/slice";
@@ -51,6 +54,7 @@ export default function App({ Component, pageProps }) {
         <ModalWithError />
         <ModalWithCall />
         <ModalWithImagesCarousel />
+        <ModalWithConfirm />
 
         <Component {...pageProps} />
     </>;

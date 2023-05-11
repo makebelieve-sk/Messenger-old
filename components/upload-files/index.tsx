@@ -1,7 +1,12 @@
 import React from "react";
-import { Alert, Button, IconButton, Modal, Snackbar, Tooltip } from "@mui/material";
-import AttachFileOutlinedIcon from "@mui/icons-material/AttachFileOutlined";
 import { v4 as uuid } from "uuid";
+import Tooltip from "@mui/material/Tooltip";
+import IconButton from "@mui/material/IconButton";
+import Modal from "@mui/material/Modal";
+import Button from "@mui/material/Button";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import AttachFileOutlinedIcon from "@mui/icons-material/AttachFileOutlined";
 import { MessageTypes } from "../../types/enums";
 import FileComponent from "../file";
 import { SmilesComponent } from "../smiles";
@@ -18,11 +23,12 @@ const modalDescription = "modal-message-with-files-description";
 interface IModalWithFiles {
     className: string;
     friendInfo: IFriendInfo | null;
+    chatId: string | null;
     onSubmit: ({ type, files }: { type: MessageTypes, files: File[] }) => void;
     setCurrentValueRef: (newValue: string, cb?: (oldValue: string) => void) => void;
 };
 
-export const UploadFiles = React.memo(({ className, friendInfo, onSubmit, setCurrentValueRef }: IModalWithFiles) => {
+export const UploadFiles = React.memo(({ className, friendInfo, chatId, onSubmit, setCurrentValueRef }: IModalWithFiles) => {
     const [open, setOpen] = React.useState(false);
     const [files, setFiles] = React.useState<File[]>([]);
     const [overSize, setOverSize] = React.useState<{ name: string; size: number; }[]>([]);
@@ -148,6 +154,7 @@ export const UploadFiles = React.memo(({ className, friendInfo, onSubmit, setCur
                     <InputComponent
                         ref={inputFilesRef}
                         friendInfo={friendInfo}
+                        chatId={chatId}
                         onSubmit={onSubmitHandler}
                     />
                 </div>

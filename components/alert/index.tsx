@@ -9,10 +9,10 @@ interface IAlertComponent {
     status?: "error" | "success" | "warning" | "info";
 };
 
-export default function AlertComponent({ show, children, status = "success" }: IAlertComponent) {
+export default React.memo(function AlertComponent({ show, children, status = "success" }: IAlertComponent) {
     return <Slide in={show} mountOnEnter unmountOnExit timeout={1000} className={styles["slide"]}>
         <Alert color={status} className={styles["alert"]}>
             { children }
         </Alert>
     </Slide>
-};
+});

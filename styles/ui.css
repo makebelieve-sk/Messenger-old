@@ -1,9 +1,12 @@
 /* Обертка блока */
+
 .paper-block {
     padding: 10px 20px;
 }
 
+
 /* Прозрачный текст */
+
 .opacity-text {
     color: #babec2;
     padding: 10px 0;
@@ -11,13 +14,17 @@
     font-size: 14px;
 }
 
+
 /* Для счетчика количества (друзей, фото и т.д.) */
+
 .counter {
     color: #626d7a;
     padding-left: 5px;
 }
 
+
 /* Для заголовка блока */
+
 .block-title {
     color: #000000;
     font-size: 14px;
@@ -25,12 +32,26 @@
     display: flex;
     line-height: 150%;
 }
+
 .block-title:hover {
     cursor: pointer;
 }
 
+
 /* Вкладка */
+
 .label-tab {
     font-size: 13px;
     min-height: 30px;
+}
+
+
+/* Глобальные стили для flex */
+
+.jc-sb {
+    justify-content: space-between;
+}
+
+.ai-c {
+    align-items: center;
 }

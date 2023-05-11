@@ -1,7 +1,6 @@
 @use "sass:math";
 @import "../../styles/variables.scss";
 @import "../../styles/colors.scss";
-
 .header {
     background: $white;
     height: $headerHeight;
@@ -35,6 +34,9 @@
             &:hover {
                 cursor: pointer;
             }
+        }
+        &__menu {
+            margin-top: 32px;
         }
     }
 }

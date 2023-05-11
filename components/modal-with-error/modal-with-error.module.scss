@@ -1,4 +1,7 @@
 @import "../../styles/colors.scss";
+.alert-error-container {
+    width: 100%;
+}
 
 .modal-error-container {
     position: absolute;
@@ -9,6 +12,9 @@
     box-shadow: 24px;
     padding: 15px 30px 25px;
     background: $white;
+    &__text {
+        margin-top: 10px;
+    }
     &__error {
         margin-top: 10px;
         border: 1px solid $very-light-grey;
@@ -16,5 +22,8 @@
         &:hover {
             cursor: copy;
         }
+    }
+    &__button {
+        margin-top: 20px;
     }
 }

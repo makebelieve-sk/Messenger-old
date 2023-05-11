@@ -206,7 +206,7 @@ export default function SignUp() {
 
                     <Grid container justifyContent="center" sx={{ mb: 3 }}>
                         <Grid item>
-                            <Link href="/sign-in" variant="body2" onClick={() => router.push("/sign-in")}>
+                            <Link href={Pages.signIn} variant="body2" onClick={() => router.push(Pages.signIn)}>
                                 Уже есть аккаунт? Войдите
                             </Link>
                         </Grid>
@@ -237,7 +237,7 @@ export default function SignUp() {
                     </Box>
                 </Box>
 
-                <Copyright sx={{ mt: 5 }} />
+                <Copyright />
             </Container>
         </ThemeProvider>
     );

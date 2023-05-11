@@ -1,0 +1,10 @@
+.friends-list-container__list {
+    width: 100%;
+    padding: 0;
+    .friends-list-container__skeleton-container {
+        margin-bottom: 10px;
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+}
