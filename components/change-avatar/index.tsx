@@ -18,7 +18,7 @@ export default React.memo(function ChangeAvatar({ labelClassname, labelText, mus
     const dispatch = useAppDispatch();
 
     // Функция изменения аватарки
-    const handleChangeImage = async (event: React.MouseEvent<HTMLLabelElement, MouseEvent>) => {
+    const handleChangeImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
         try {
             const target = event.target as HTMLInputElement;
 
@@ -57,8 +57,8 @@ export default React.memo(function ChangeAvatar({ labelClassname, labelText, mus
         );
     };
 
-    return <label htmlFor={`change-avatar-${labelText}`} className={labelClassname} onClick={handleChangeImage}>
+    return <label htmlFor={`change-avatar-${labelText}`} className={labelClassname}>
         {labelText}
-        <input id={`change-avatar-${labelText}`} type="file" accept="image/*" hidden />
+        <input id={`change-avatar-${labelText}`} type="file" accept="image/*" hidden onChange={handleChangeImage} />
     </label>
 });

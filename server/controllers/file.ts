@@ -3,12 +3,15 @@ import { v4 as uuid } from "uuid";
 import open from "open";
 // import sharp from "sharp";
 import fs from "fs";
+import { Op } from "sequelize";
 import { Request, Response, Express } from "express";
 import { ApiRoutes, HTTPStatuses } from "../../types/enums";
 import FilesModel from "../database/models/files";
 import { sequelize } from "../database";
 import { mustAuthenticated } from "../middlewares";
 import UserDetailModel from "../database/models/user_details";
+import UserModel from "../database/models/users";
+import { IUser } from "../../types/models.types";
 
 // enum FileExtensions {
 //     png = ".png",
@@ -61,10 +64,18 @@ class FileController {
     // Загрузка аватара (req.file)
     async uploadImage(req: Request, res: Response) {
         try {
-            if (req.file) {
+            if (req.file && req.user) {
                 const file = req.file;
                 // const filePath = file.path;
                 // const extension = file.mimetype.split("/").pop();
+
+                const fileUrl = "/" + file.destination.split("/")[1] + "/" + file.filename;
+
+                // Сохраняем аватар в таблицу Users
+                await UserModel.update(
+                    { avatarUrl: fileUrl }, 
+                    { where: { id: (req.user as IUser).id } }
+                );
 
                 return res.json({ success: true, url: `/${file.fieldname}s/${file.filename}` });
 
@@ -202,6 +213,41 @@ class FileController {
             return res.status(HTTPStatuses.ServerError).send({ success: false, message: error.message ?? error });
         }
     };
+
+    // Удаление файла
+    async deleteFile(req: Request, res: Response) {
+        try {
+            const { path, isAvatar = false } = req.body as { path: string; isAvatar: boolean };
+
+            if (!path) {
+                throw "Не передан путь для удаления файла";
+            }
+
+            if (!fs.existsSync(path)) {
+                return res.status(HTTPStatuses.NotFound).send({ success: false, message: "Файл не найден" });
+            }
+
+            // Если это удаление аватара пользователя
+            if (isAvatar) {
+                await UserModel.destroy({
+                    where: { avatarUrl: path, id: (req.user as IUser).id }
+                });
+            } else {
+                // Если это удаление обычных фотографий пользователя
+                await UserDetailModel.destroy({
+                    where: { photos: {[Op.like]: `%${path}%` } }
+                });
+            }
+
+            // Удаление файла с диска
+            fs.unlinkSync(path);
+
+            return res.json({ success: true });
+        } catch (error: any) {
+            console.log(error);
+            return res.status(HTTPStatuses.ServerError).send({ success: false, message: error.message ?? error });
+        }
+    };
 };
 
 const fileController = new FileController();
@@ -213,4 +259,5 @@ export default function FileRouter(app: Express) {
     app.post(ApiRoutes.addNewPhotos, mustAuthenticated, fileController.uploader.array("photo"), fileController.addNewPhotos);
     app.post(ApiRoutes.openFile, mustAuthenticated, fileController.openFile);
     app.get(ApiRoutes.downloadFile, mustAuthenticated, fileController.downloadFile);
+    app.get(ApiRoutes.deleteFile, mustAuthenticated, fileController.deleteFile);
 };

@@ -22,6 +22,7 @@ enum ApiRoutes {
     openFile = "/open-file",
     downloadFile = "/download-file",
     addNewPhotos = "/add-new-photos",
+    deleteFile = "/delete-file",
     //----friends--------
     friends = "/friends",
     getFriends = "/get-friends",
